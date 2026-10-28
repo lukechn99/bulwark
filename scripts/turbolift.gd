@@ -37,7 +37,7 @@ func _process(_delta: float) -> void:
 	var inside := player_inside()
 	var hud := get_tree().get_first_node_in_group("hud")
 	if hud and not _busy:
-		hud.set_prompt(self, "[E]  Turbolift to %s" % label if inside else "")
+		hud.set_prompt(self, "%s  Turbolift to %s" % ["[USE]" if Player.autoplay else "[E]", label] if inside else "")
 	_ring.visible = not inside or int(Time.get_ticks_msec() / 300.0) % 2 == 0
 	if inside and not _busy and Input.is_action_just_pressed("interact"):
 		_ride(hud)

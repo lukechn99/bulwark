@@ -18,10 +18,22 @@ and planet are generated in code at startup, and no assets are borrowed.
 
 ## Play
 
+On a computer:
+
 - **WASD**: move. **Shift**: sprint. **Space**: jump.
 - **Mouse**: look. **Left click**: fire. **Right click**: aim over the shoulder.
-- **E**: use a turbolift.
+- **E**: use a turbolift. **F** or the corner button: fullscreen.
 - **Esc**: release the mouse.
+
+On a phone or tablet (landscape):
+
+- **Left thumb**: a joystick appears wherever you touch. Push it all the way
+  forward to sprint.
+- **Swipe the right side**: look around.
+- **FIRE**: hold to shoot. Drag your thumb across it to aim while firing.
+- **AIM** toggles the zoom. **JUMP** jumps, and **USE** rides turbolifts.
+- **Fullscreen**: tap the corner button. iPhone Safari has no fullscreen
+  mode, so choose Share → Add to Home Screen and launch the game from there.
 
 ## What's in the prototype
 
@@ -89,6 +101,9 @@ grate textures, the starfield and the input map.
   it can't pass through thin walls.
 - `droid.gd`: the sentry drones.
 - `hud.gd`: the heads-up display.
+- `touch_controls.gd`: the joystick, look swipes and buttons for touch
+  screens, plus the fullscreen button. Phones also get a lower 3D resolution
+  and no sun shadows.
 
 ## Develop
 

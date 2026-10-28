@@ -44,6 +44,8 @@ func _ready() -> void:
 	if dev.has("hold"):
 		for action in str(dev["hold"]).split(","):
 			Input.action_press(action)
+	if dev.has("touchdemo"):
+		_touch_demo()
 	if dev.has("shot"):
 		await get_tree().create_timer(float(dev.get("wait", "2.5"))).timeout
 		await RenderingServer.frame_post_draw
@@ -84,6 +86,7 @@ func _environment() -> void:
 
 	# Light from the planet below the hangar mouth: cool, low and from +X.
 	var sun := DirectionalLight3D.new()
+	sun.add_to_group("sun")
 	sun.rotation_degrees = Vector3(-28, 100, 0)
 	sun.light_color = Color(0.82, 0.88, 1.0)
 	sun.light_energy = 1.3
@@ -189,3 +192,31 @@ func dev_options() -> Dictionary:
 		var kv := str(a).trim_prefix("--").split("=", true, 1)
 		opts[kv[0]] = kv[1] if kv.size() > 1 else "1"
 	return opts
+
+
+## Simulates a thumb on the joystick, a swipe to look and a held FIRE button.
+func _touch_demo() -> void:
+	var size := get_viewport().get_visible_rect().size
+	var send := func(ev: InputEvent) -> void: Input.parse_input_event(ev)
+	var t := InputEventScreenTouch.new()
+	t.index = 0
+	t.position = Vector2(160, size.y - 160)
+	t.pressed = true
+	send.call(t)
+	for i in 6:
+		await get_tree().process_frame
+		var d := InputEventScreenDrag.new()
+		d.index = 0
+		d.position = Vector2(160 + i * 4, size.y - 160 - i * 14)
+		send.call(d)
+	var f := InputEventScreenTouch.new()
+	f.index = 1
+	f.position = Vector2(size.x - 120, size.y - 130)
+	f.pressed = true
+	send.call(f)
+	for i in 10:
+		await get_tree().process_frame
+		var d := InputEventScreenDrag.new()
+		d.index = 1
+		d.position = f.position + Vector2(-i * 6, 0)
+		send.call(d)

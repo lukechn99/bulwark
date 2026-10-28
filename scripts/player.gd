@@ -15,6 +15,7 @@ const GRAVITY := 19.0
 const MOUSE_SENS := 0.0025
 const FIRE_INTERVAL := 0.15
 const MAX_HEALTH := 100.0
+const SHOULDER := 0.75
 
 ## Set by the dev hooks in main.gd to play without a captured mouse.
 static var autoplay := false
@@ -109,7 +110,7 @@ func _build_camera() -> void:
 	_spring.spring_length = 3.0
 	_spring.margin = 0.2
 	_spring.collision_mask = 1
-	_spring.position = Vector3(0.75, 0.1, 0)
+	_spring.position = Vector3(SHOULDER, 0.1, 0)
 	var probe := SphereShape3D.new()
 	probe.radius = 0.25
 	_spring.shape = probe
@@ -141,6 +142,8 @@ func camera() -> Camera3D:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if autoplay:
+		return   # touch play: the on-screen controls drive the camera
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		get_viewport().set_input_as_handled()
@@ -148,8 +151,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		yaw -= event.relative.x * MOUSE_SENS
-		pitch = clampf(pitch - event.relative.y * MOUSE_SENS, -1.2, 1.1)
+		add_look(event.relative.x * MOUSE_SENS, event.relative.y * MOUSE_SENS)
+
+
+## Turn the camera; positive x looks right, positive y looks down.
+func add_look(x: float, y: float) -> void:
+	yaw -= x
+	pitch = clampf(pitch - y, -1.2, 1.1)
 
 
 func _physics_process(delta: float) -> void:
@@ -211,6 +219,17 @@ func _update_camera_rig(weight: float) -> void:
 	yaw_node.global_position = yaw_node.global_position.lerp(global_position + Vector3(0, 1.6, 0), weight)
 	yaw_node.rotation.y = yaw
 	_pitch_node.rotation.x = pitch + _recoil
+	# Keep the shoulder offset inside walls: the spring arm only guards the
+	# pull-back, so the sideways step from head to shoulder needs its own ray.
+	var head := yaw_node.global_position
+	var side := yaw_node.global_transform.basis.x
+	var q := PhysicsRayQueryParameters3D.create(head, head + side * (SHOULDER + 0.3), 1)
+	q.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	var room := SHOULDER
+	if hit:
+		room = clampf(head.distance_to(hit.position) - 0.3, 0.0, SHOULDER)
+	_spring.position.x = room
 
 
 func _fire(aiming: bool) -> void:

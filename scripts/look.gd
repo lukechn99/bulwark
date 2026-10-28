@@ -79,6 +79,7 @@ func _setup_input() -> void:
 	_bind_keys("jump", [KEY_SPACE])
 	_bind_keys("interact", [KEY_E])
 	_bind_keys("pause", [KEY_ESCAPE])
+	_bind_keys("fullscreen", [KEY_F])
 	_bind_mouse("fire", MOUSE_BUTTON_LEFT)
 	_bind_mouse("aim", MOUSE_BUTTON_RIGHT)
 

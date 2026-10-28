@@ -48,6 +48,7 @@ jobs:
       - name: Export
         run: |
           mkdir -p build/web
+          touch build/.gdignore
           ~/godot/godot --headless --path . --import
           ~/godot/godot --headless --path . --export-release "Web" build/web/index.html
           test -f build/web/index.wasm

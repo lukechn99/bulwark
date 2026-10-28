@@ -76,6 +76,10 @@ func _ready() -> void:
 	_prompt = _centered(root, 18, 0.72)
 	_message = _centered(root, 30, 0.38)
 
+	var touch := preload("res://scripts/touch_controls.gd").new()
+	touch.name = "TouchControls"
+	root.add_child(touch)
+
 	_fade = _rect(root, Color(0, 0, 0, 1.0))
 	_start = _start_panel(root)
 	fade(0.0, 0.8)
@@ -117,6 +121,10 @@ func set_prompt(owner: Object, text: String) -> void:
 	else:
 		_prompts[owner] = text
 	_prompt.text = _prompts.values().back() if _prompts.size() > 0 else ""
+
+
+func has_prompt() -> bool:
+	return _prompt.text != ""
 
 
 func show_message(text: String) -> void:
@@ -169,9 +177,10 @@ func _start_panel(root: Control) -> Control:
 	panel.add_child(box)
 	var title := _label(box, "BULWARK", 54, Color(1, 1, 1))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var sub := _label(box, "Click to deploy", 20, ACCENT)
+	var touch := DisplayServer.is_touchscreen_available()
+	var sub := _label(box, "Tap to deploy" if touch else "Click to deploy", 20, ACCENT)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var help := _label(box, "WASD move · Shift sprint · Space jump · Mouse look\nLeft click fire · Right click aim · E use · Esc release mouse", 14, Color(1, 1, 1, 0.75))
+	var help := _label(box, "Left thumb moves · swipe right side to look\nHold FIRE (drag it to aim) · AIM zooms · USE rides turbolifts" if touch else "WASD move · Shift sprint · Space jump · Mouse look\nLeft click fire · Right click aim · E use · F fullscreen · Esc release mouse", 14, Color(1, 1, 1, 0.75))
 	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return panel
 
