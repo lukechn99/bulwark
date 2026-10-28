@@ -1,0 +1,36 @@
+; Engine configuration file.
+; Bulwark — a third-person shooter set aboard an original Republic-era star cruiser.
+
+config_version=5
+
+[application]
+
+config/name="Bulwark"
+config/description="Third-person shooter prototype aboard the star cruiser Bulwark."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.4", "GL Compatibility")
+boot_splash/bg_color=Color(0.02, 0.03, 0.05, 1)
+boot_splash/show_image=false
+
+[autoload]
+
+Look="*res://scripts/look.gd"
+Zones="*res://scripts/zone_manager.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+
+[physics]
+
+common/physics_ticks_per_second=60
+3d/physics_engine="GodotPhysics3D"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+limits/opengl/max_lights_per_object=16
+anti_aliasing/quality/msaa_3d=1
+textures/default_filters/anisotropic_filtering_level=2
