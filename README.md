@@ -22,7 +22,7 @@ On a computer:
 
 - **WASD**: move. **Shift**: sprint. **Space**: jump.
 - **Mouse**: look. **Left click**: fire. **Right click**: aim over the shoulder.
-- **E**: use a turbolift. **F** or the corner button: fullscreen.
+- **E**: use turbolifts, turrets and consoles. **F** or the corner button: fullscreen.
 - **Esc**: release the mouse.
 
 On a phone or tablet (landscape):
@@ -31,7 +31,8 @@ On a phone or tablet (landscape):
   forward to sprint.
 - **Swipe the right side**: look around.
 - **FIRE**: hold to shoot. Drag your thumb across it to aim while firing.
-- **AIM** toggles the zoom. **JUMP** jumps, and **USE** rides turbolifts.
+- **AIM** toggles the zoom. **JUMP** jumps, and **USE** rides turbolifts,
+  crews turrets and works consoles.
 - **Fullscreen**: tap the corner button. iPhone Safari has no fullscreen
   mode, so choose Share → Add to Home Screen and launch the game from there.
 
@@ -40,10 +41,20 @@ On a phone or tablet (landscape):
 | Zone | Contents |
 |---|---|
 | Hangar Bay 3 | Parked fighters, crates for cover, wall catwalks, a control gallery and a ray shield open to space |
-| Port Service Corridor | 40 m of ribbed corridor with console niches, ending at a turbolift lobby |
-| Command Bridge | A walkway between crew pits, a holotable and forward viewports. It is reached only by turbolift |
+| Port Service Corridor | 40 m of ribbed corridor with console niches, ending in a lift hall with one turbolift per deck |
+| Command Bridge | A walkway between crew pits, a holotable and forward viewports |
+| Dorsal Flight Deck | A long trench in the top of the hull under a ray shield, with the command tower behind it. Heavy turrets on the hull are crewed from stations in the trench walls, and enemy fighters make strafing runs |
+| Detention Level | A guard station and a cell block with energy-field doors. Release the cells from the guard console and lead the prisoner to the lift |
 
-Sentry drones patrol the hangar and corridor.
+The lift hall connects the decks: the bridge straight ahead, the flight
+deck on the left and detention on the right.
+
+Enemies:
+
+- **Sentry drones** hover in the hangar and corridor.
+- **Assault droids** (original design, with reverse knees and a hammerhead
+  sensor bar) fight in squads that fire together in volleys.
+- **Enemy fighters** loop around the ship and strafe the flight deck.
 
 ![Port Service Corridor](docs/corridor.png)
 ![Command Bridge](docs/bridge.png)
@@ -100,6 +111,11 @@ grate textures, the starfield and the input map.
 - `bolt.gd`: blaster bolts. Each frame a bolt sweeps a ray along its path, so
   it can't pass through thin walls.
 - `droid.gd`: the sentry drones.
+- `infantry.gd`: assault droid squads and their shared volley timing.
+- `fighter.gd`: enemy fighters flying waypoint loops and attack runs.
+- `turret.gd`: crewable twin cannons. While the player is seated, look
+  input aims the guns.
+- `prisoner.gd`: the rescued officer who follows you.
 - `hud.gd`: the heads-up display.
 - `touch_controls.gd`: the joystick, look swipes and buttons for touch
   screens, plus the fullscreen button. Phones also get a lower 3D resolution

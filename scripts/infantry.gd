@@ -29,6 +29,8 @@ var _shots_left := 0
 var _shot_timer := 0.0
 var _strafe := 1.0
 var _alert := false
+## Seconds this droid has had the player in sight; it holds fire for a beat.
+var _spotted := 0.0
 var _dead := false
 var _home: Vector3
 
@@ -166,8 +168,11 @@ func _physics_process(delta: float) -> void:
 			if randf() < delta * 0.35:
 				_strafe = -_strafe
 			_gun_arm.rotation.x = lerpf(_gun_arm.rotation.x, deg_to_rad(80), 0.2)
-			_fight(delta, chest)
+			_spotted += delta
+			if _spotted > 1.2:
+				_fight(delta, chest)
 	if not _alert:
+		_spotted = 0.0
 		_gun_arm.rotation.x = lerpf(_gun_arm.rotation.x, 0.0, 0.1)
 	velocity.x = move_toward(velocity.x, move.x * WALK, 12.0 * delta)
 	velocity.z = move_toward(velocity.z, move.z * WALK, 12.0 * delta)
@@ -196,7 +201,7 @@ func _fight(delta: float, target: Vector3) -> void:
 	var now := Time.get_ticks_msec()
 	var v: Dictionary = _volleys.get(squad, {"next": now + 1200, "id": 0})
 	if now >= v["next"]:
-		v["next"] = now + randi_range(2000, 2800)
+		v["next"] = now + randi_range(2600, 3400)
 		v["id"] += 1
 	_volleys[squad] = v
 	if v["id"] != _seen_volley:
@@ -209,10 +214,10 @@ func _fight(delta: float, target: Vector3) -> void:
 			_shot_timer = 0.17
 			_shots_left -= 1
 			var from := _muzzle.global_position
-			var spread := 0.045
+			var spread := 0.075
 			var dir := (target - from).normalized()
 			dir = (dir + Vector3(randf_range(-spread, spread), randf_range(-spread, spread) * 0.6, randf_range(-spread, spread))).normalized()
-			Bolt.fire(get_parent(), from, dir, self, Look.bolt_red, 6.0)
+			Bolt.fire(get_parent(), from, dir, self, Look.bolt_red, 4.0)
 
 
 func take_damage(amount: float, _from: Vector3) -> bool:

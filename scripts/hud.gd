@@ -93,7 +93,7 @@ func _process(delta: float) -> void:
 	if player:
 		_health_fill.size.x = 256.0 * clampf(player.health / Player.MAX_HEALTH, 0.0, 1.0)
 		_health_fill.color = ACCENT if player.health > 35.0 else Color(1.0, 0.35, 0.25)
-		_kills.text = "DRONES DOWN  %d" % player.kills if player.kills > 0 else ""
+		_kills.text = "ENEMIES DOWN  %d" % player.kills if player.kills > 0 else ""
 	_damage.color.a = move_toward(_damage.color.a, 0.0, delta * 0.8)
 	_hit_time = maxf(0.0, _hit_time - delta)
 	_start.visible = not Player.is_playing()
