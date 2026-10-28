@@ -3,6 +3,8 @@ extends Node3D
 ## the player and HUD, then streams in the first zone.
 
 const BRIDGE_DECK := Vector3(0, 300, 0)
+const FLIGHT_DECK := Vector3(0, 150, 0)
+const DETENTION_DECK := Vector3(0, -150, 0)
 
 var world: Node3D
 var player: Player
@@ -37,6 +39,8 @@ func _ready() -> void:
 		player.global_position = Vector3(v[0], v[1], v[2])
 		player.turn(deg_to_rad(v[3]) - player.yaw)
 		player.pitch = deg_to_rad(v[4]) if v.size() > 4 else 0.0
+	if dev.has("camyaw"):
+		player.yaw += deg_to_rad(float(dev["camyaw"]))   # orbit the camera, not the body
 	player.snap_camera()
 	player.process_mode = Node.PROCESS_MODE_INHERIT
 	if dev.has("autoplay") or dev.has("hold"):
@@ -165,12 +169,22 @@ func _connectors() -> void:
 	con.name = "Connectors"
 	world.add_child(con)
 	con.add_child(Door.make(Vector3(-22.25, 0, 0), 90.0, ["hangar", "corridor"]))
-	var down := Turbolift.make(Vector3(-64.5, 0, 0), 90.0, "bridge", "Command Bridge")
-	var up := Turbolift.make(BRIDGE_DECK + Vector3(-7.5, 0, 0), -90.0, "corridor", "Port Service Corridor")
-	down.destination = up
-	up.destination = down
-	con.add_child(down)
-	con.add_child(up)
+	# The lift hall at the end of the corridor has one lift per deck; each deck
+	# has one lift back. You arrive facing the way you walked in, turned by the
+	# difference in yaw: hall lifts face into their shafts (-Z), deck lifts face
+	# out of theirs.
+	_lift_pair(con, Vector3(-72.5, 0, 0), 90.0, BRIDGE_DECK + Vector3(-7.5, 0, 0), -90.0, "bridge", "Command Bridge")
+	_lift_pair(con, Vector3(-68.0, 0, -5.5), 0.0, FLIGHT_DECK + Vector3(-66.5, 0, 0), -90.0, "flightdeck", "Dorsal Flight Deck")
+	_lift_pair(con, Vector3(-68.0, 0, 5.5), 180.0, DETENTION_DECK + Vector3(-34.5, 0, 0), -90.0, "detention", "Detention Level")
+
+
+func _lift_pair(con: Node3D, hall_pos: Vector3, hall_yaw: float, deck_pos: Vector3, deck_yaw: float, deck_zone: String, deck_title: String) -> void:
+	var go := Turbolift.make(hall_pos, hall_yaw, deck_zone, deck_title)
+	var back := Turbolift.make(deck_pos, deck_yaw, "corridor", "Lift Hall")
+	go.destination = back
+	back.destination = go
+	con.add_child(go)
+	con.add_child(back)
 
 
 # --- dev hooks ----------------------------------------------------------------
@@ -179,6 +193,7 @@ func _connectors() -> void:
 # --spawn   start in a zone (its spawn point)
 # --pose    x,y,z,yaw_deg,pitch_deg in world space
 # --hold    comma-separated input actions to hold down (implies --autoplay)
+# --camyaw  orbit the camera around the player by this many degrees
 # --shot    save a screenshot after --wait seconds (default 2.5) and quit
 
 func dev_options() -> Dictionary:

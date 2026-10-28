@@ -36,6 +36,11 @@ var bolt_red: StandardMaterial3D
 var planet: StandardMaterial3D
 var engine_glow: StandardMaterial3D
 var star_sky: Sky
+var droid_shell: StandardMaterial3D
+var droid_mark: StandardMaterial3D
+var droid_eye: StandardMaterial3D
+var energy_field: StandardMaterial3D
+var armor_stripe: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -66,6 +71,11 @@ func _ready() -> void:
 	planet = _planet_material()
 	engine_glow = _glow(Color(0.5, 0.75, 1.0), 6.0)
 	star_sky = _starfield()
+	droid_shell = _lit(Color(0.36, 0.33, 0.29), 0.45, 0.65, [], 1.0)
+	droid_mark = _lit(Color(0.85, 0.42, 0.08), 0.5, 0.2, [], 1.0)
+	droid_eye = _glow(Color(1.0, 0.55, 0.1), 5.0)
+	energy_field = _clear(Color(1.0, 0.2, 0.12, 0.35), true)
+	armor_stripe = _lit(Color(0.12, 0.32, 0.62), 0.4, 0.1, [], 1.0)
 
 
 # --- input --------------------------------------------------------------------

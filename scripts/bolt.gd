@@ -4,26 +4,27 @@ extends Node3D
 ## bolts never tunnel through thin walls.
 
 const SPEED := 85.0
-const LIFETIME := 2.5
+const LIFETIME := 3.0
 
 var velocity := Vector3.ZERO
 var shooter: Node3D
 var damage := 10.0
 var color := Color.WHITE
 var _age := 0.0
+var heavy := false
 var _exclude: Array[RID] = []
 
 
-static func fire(parent: Node, from: Vector3, dir: Vector3, by: Node3D, mat: StandardMaterial3D, dmg: float) -> Bolt:
+static func fire(parent: Node, from: Vector3, dir: Vector3, by: Node3D, mat: StandardMaterial3D, dmg: float, speed := SPEED, thickness := 1.0) -> Bolt:
 	var b := Bolt.new()
 	b.shooter = by
 	b.damage = dmg
-	b.velocity = dir * SPEED
+	b.velocity = dir * speed
 	b.color = mat.albedo_color
 	var mesh := MeshInstance3D.new()
 	var capsule := CapsuleMesh.new()
-	capsule.radius = 0.035
-	capsule.height = 1.1
+	capsule.radius = 0.035 * thickness
+	capsule.height = 1.1 * thickness * (speed / SPEED)
 	capsule.radial_segments = 6
 	capsule.rings = 2
 	mesh.mesh = capsule
@@ -37,6 +38,7 @@ static func fire(parent: Node, from: Vector3, dir: Vector3, by: Node3D, mat: Sta
 	if by is CollisionObject3D:
 		b._exclude.append((by as CollisionObject3D).get_rid())
 	Fx.muzzle_flash(parent, from, b.color)
+	b.heavy = thickness > 2.0
 	return b
 
 
@@ -57,7 +59,10 @@ func _physics_process(delta: float) -> void:
 			var killed: bool = target.take_damage(damage, from)
 			if is_instance_valid(shooter) and shooter.has_method("on_hit_target"):
 				shooter.on_hit_target(killed)
-		Fx.impact(get_parent(), hit.position, hit.normal, color)
+		if heavy:
+			Fx.explosion(get_parent(), hit.position)
+		else:
+			Fx.impact(get_parent(), hit.position, hit.normal, color)
 		queue_free()
 		return
 	global_position = to

@@ -24,6 +24,8 @@ var health := MAX_HEALTH
 var yaw := 0.0
 var pitch := -0.1
 var kills := 0
+## A turret (or anything else) the player is operating; it gets look input.
+var vehicle: Node = null
 
 var _model: Node3D
 var _legs: Array[Node3D] = []
@@ -37,6 +39,7 @@ var _since_hit := 99.0
 var _stride := 0.0
 var _recoil := 0.0
 var _dead := false
+var _outside := 0.0
 
 
 func _ready() -> void:
@@ -55,48 +58,137 @@ func _ready() -> void:
 	_build_camera()
 
 
+## An original armored trooper: rounded white plates over a black body glove,
+## a domed helmet with a wraparound visor band and blue unit markings.
 func _build_model() -> void:
 	_model = Node3D.new()
 	add_child(_model)
-	var b := func(parent: Node3D, size: Vector3, pos: Vector3, mat: Material) -> Node3D:
-		return Kit.block(parent, size, pos, mat, false)
+	var white := Look.armor
+	var glove := Look.undersuit
+	var stripe := Look.armor_stripe
 	# Legs pivot at the hip so they can swing.
 	for side in [-1.0, 1.0]:
 		var hip := Node3D.new()
-		hip.position = Vector3(side * 0.13, 0.92, 0)
+		hip.position = Vector3(side * 0.12, 0.93, 0)
 		_model.add_child(hip)
-		b.call(hip, Vector3(0.2, 0.9, 0.22), Vector3(0, -0.45, 0), Look.undersuit)
-		b.call(hip, Vector3(0.22, 0.38, 0.25), Vector3(0, -0.25, -0.01), Look.armor)   # thigh plate
-		b.call(hip, Vector3(0.21, 0.36, 0.24), Vector3(0, -0.68, -0.01), Look.armor)   # shin plate
-		b.call(hip, Vector3(0.22, 0.12, 0.32), Vector3(0, -0.87, -0.05), Look.undersuit)  # boot
+		_cap(hip, 0.085, 0.92, Vector3(0, -0.45, 0), glove)
+		_cap(hip, 0.105, 0.42, Vector3(0, -0.2, -0.015), white)              # thigh plate
+		_sph(hip, 0.075, Vector3(0, -0.47, -0.06), Look.hull_dark)           # knee pad
+		_cap(hip, 0.095, 0.4, Vector3(0, -0.68, -0.005), white)              # shin plate
+		_box(hip, Vector3(0.17, 0.11, 0.3), Vector3(0, -0.88, -0.04), white) # boot
+		_box(hip, Vector3(0.18, 0.04, 0.31), Vector3(0, -0.93, -0.04), glove)
+		if side < 0:
+			_box(hip, Vector3(0.03, 0.22, 0.12), Vector3(-0.1, -0.2, -0.01), stripe)
 		_legs.append(hip)
-	b.call(_model, Vector3(0.42, 0.18, 0.26), Vector3(0, 0.98, 0), Look.undersuit)      # belt
-	b.call(_model, Vector3(0.46, 0.5, 0.28), Vector3(0, 1.3, 0), Look.armor)            # chest
-	b.call(_model, Vector3(0.3, 0.16, 0.05), Vector3(0, 1.38, -0.15), Look.trim_red)     # chest marking
-	b.call(_model, Vector3(0.36, 0.3, 0.14), Vector3(0, 1.25, 0.2), Look.hull_dark)      # backpack
+	# Belt and pouches, body glove torso, chest and abdomen plates.
+	_cap(_model, 0.17, 0.34, Vector3(0, 1.0, 0), glove)
+	_box(_model, Vector3(0.38, 0.08, 0.25), Vector3(0, 0.97, 0), Look.hull_dark)
+	for x in [-0.14, 0.0, 0.14]:
+		_box(_model, Vector3(0.08, 0.08, 0.05), Vector3(x, 0.97, -0.14), white)
+	_cap(_model, 0.19, 0.5, Vector3(0, 1.32, 0), glove)
+	_box(_model, Vector3(0.28, 0.15, 0.22), Vector3(0, 1.12, -0.02), white)
+	var chest := _sph(_model, 0.23, Vector3(0, 1.38, -0.02), white)
+	chest.scale = Vector3(1.0, 0.75, 0.62)
+	_box(_model, Vector3(0.22, 0.04, 0.02), Vector3(0, 1.31, -0.165), stripe)
+	_cap(_model, 0.13, 0.1, Vector3(0, 1.56, 0), glove)                   # collar
+	_box(_model, Vector3(0.3, 0.32, 0.12), Vector3(0, 1.32, 0.2), Look.hull_dark)  # pack
+	_cap(_model, 0.012, 0.35, Vector3(0.1, 1.6, 0.22), Look.metal)        # antenna
+	# Helmet: dome, wraparound visor band, cheek guards, crest and side stripes.
 	var head := Node3D.new()
-	head.position = Vector3(0, 1.7, 0)
+	head.position = Vector3(0, 1.72, 0)
 	_model.add_child(head)
-	b.call(head, Vector3(0.3, 0.3, 0.32), Vector3.ZERO, Look.armor)                    # helmet
-	b.call(head, Vector3(0.24, 0.08, 0.04), Vector3(0, 0.02, -0.16), Look.visor)        # visor slot
-	b.call(head, Vector3(0.04, 0.12, 0.04), Vector3(0, -0.08, -0.16), Look.visor)       # breather
-	b.call(head, Vector3(0.32, 0.05, 0.34), Vector3(0, 0.12, 0), Look.trim_red)         # crest stripe
-	# Arms and blaster on one pivot that follows the camera pitch.
+	var dome := _sph(head, 0.15, Vector3(0, 0.02, 0.0), white)
+	dome.scale = Vector3(1.0, 1.08, 1.12)
+	var band := MeshInstance3D.new()
+	var ring := CylinderMesh.new()
+	ring.top_radius = 0.152
+	ring.bottom_radius = 0.158
+	ring.height = 0.05
+	ring.radial_segments = 20
+	ring.rings = 1
+	band.mesh = ring
+	band.material_override = Look.visor
+	band.scale = Vector3(1.0, 1.0, 1.12)
+	band.position = Vector3(0, 0.03, -0.004)
+	head.add_child(band)
+	_box(head, Vector3(0.22, 0.09, 0.08), Vector3(0, -0.09, -0.12), white)   # jaw guard
+	_box(head, Vector3(0.14, 0.03, 0.02), Vector3(0, -0.07, -0.165), Look.hull_dark)
+	_box(head, Vector3(0.025, 0.06, 0.24), Vector3(0, 0.16, 0.0), stripe)    # crest
+	for side in [-1.0, 1.0]:
+		var ear := _cyl(head, 0.045, 0.03, Vector3(side * 0.155, -0.02, 0.01), Look.hull_dark)
+		ear.rotation.z = deg_to_rad(90)
+	# Shoulder bells, one with the unit stripe.
+	for side in [-1.0, 1.0]:
+		var bell := _sph(_model, 0.11, Vector3(side * 0.29, 1.5, 0), white)
+		bell.scale = Vector3(1.0, 0.8, 1.1)
+		if side > 0:
+			_box(_model, Vector3(0.04, 0.1, 0.18), Vector3(0.39, 1.48, 0), stripe)
+	# Arms and rifle on one pivot that follows the camera pitch.
 	_arm_pivot = Node3D.new()
 	_arm_pivot.position = Vector3(0, 1.42, 0)
 	_model.add_child(_arm_pivot)
 	for side in [-1.0, 1.0]:
-		b.call(_model, Vector3(0.16, 0.16, 0.2), Vector3(side * 0.31, 1.48, 0), Look.armor)  # pauldron
-		b.call(_arm_pivot, Vector3(0.12, 0.12, 0.5), Vector3(side * 0.2, -0.08, -0.22), Look.undersuit)
+		var upper := _cap(_arm_pivot, 0.06, 0.34, Vector3(side * 0.26, -0.1, -0.06), glove)
+		upper.rotation.x = deg_to_rad(50)
+		var fore := _cap(_arm_pivot, 0.065, 0.32, Vector3(side * 0.16, -0.16, -0.3), white)
+		fore.rotation = Vector3(deg_to_rad(90), 0, side * deg_to_rad(-30))
+		_sph(_arm_pivot, 0.05, Vector3(side * 0.06, -0.13, -0.44), glove)    # hands
 	var gun := Node3D.new()
-	gun.position = Vector3(0.05, -0.05, -0.45)
+	gun.position = Vector3(0.04, -0.07, -0.4)
 	_arm_pivot.add_child(gun)
-	b.call(gun, Vector3(0.09, 0.14, 0.6), Vector3.ZERO, Look.hull_dark)
-	b.call(gun, Vector3(0.05, 0.05, 0.25), Vector3(0, 0.03, -0.4), Look.metal)
-	b.call(gun, Vector3(0.05, 0.08, 0.16), Vector3(0, 0.11, -0.04), Look.metal)      # scope
+	_box(gun, Vector3(0.07, 0.12, 0.5), Vector3(0, 0, -0.05), Look.hull_dark)          # receiver
+	_box(gun, Vector3(0.05, 0.1, 0.22), Vector3(0, -0.02, 0.3), Look.hull_dark)         # stock
+	var shroud := _cyl(gun, 0.03, 0.34, Vector3(0, 0.02, -0.46), Look.metal)
+	shroud.rotation.x = deg_to_rad(90)
+	var scope := _cyl(gun, 0.025, 0.16, Vector3(0, 0.1, -0.06), Look.metal)
+	scope.rotation.x = deg_to_rad(90)
+	_box(gun, Vector3(0.04, 0.1, 0.05), Vector3(0, -0.1, -0.12), Look.hull_dark)        # magazine
 	_muzzle = Node3D.new()
-	_muzzle.position = Vector3(0, 0.03, -0.55)
+	_muzzle.position = Vector3(0, 0.02, -0.66)
 	gun.add_child(_muzzle)
+
+
+func _cap(parent: Node3D, r: float, h: float, pos: Vector3, mat: Material) -> MeshInstance3D:
+	var m := CapsuleMesh.new()
+	m.radius = r
+	m.height = maxf(h, r * 2.0)
+	m.radial_segments = 12
+	m.rings = 3
+	return _mesh(parent, m, pos, mat)
+
+
+func _sph(parent: Node3D, r: float, pos: Vector3, mat: Material) -> MeshInstance3D:
+	var m := SphereMesh.new()
+	m.radius = r
+	m.height = r * 2.0
+	m.radial_segments = 16
+	m.rings = 8
+	return _mesh(parent, m, pos, mat)
+
+
+func _cyl(parent: Node3D, r: float, h: float, pos: Vector3, mat: Material) -> MeshInstance3D:
+	var m := CylinderMesh.new()
+	m.top_radius = r
+	m.bottom_radius = r
+	m.height = h
+	m.radial_segments = 12
+	m.rings = 1
+	return _mesh(parent, m, pos, mat)
+
+
+func _box(parent: Node3D, size: Vector3, pos: Vector3, mat: Material) -> MeshInstance3D:
+	var m := BoxMesh.new()
+	m.size = size
+	return _mesh(parent, m, pos, mat)
+
+
+func _mesh(parent: Node3D, mesh: Mesh, pos: Vector3, mat: Material) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.material_override = mat
+	mi.position = pos
+	parent.add_child(mi)
+	return mi
 
 
 func _build_camera() -> void:
@@ -156,12 +248,18 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## Turn the camera; positive x looks right, positive y looks down.
 func add_look(x: float, y: float) -> void:
+	if vehicle:
+		vehicle.add_look(x, y)
+		return
 	yaw -= x
 	pitch = clampf(pitch - y, -1.2, 1.1)
 
 
 func _physics_process(delta: float) -> void:
 	if _dead:
+		return
+	if vehicle:
+		velocity = Vector3.ZERO
 		return
 	var playing := is_playing()
 	var aiming := playing and Input.is_action_pressed("aim")
@@ -202,8 +300,14 @@ func _physics_process(delta: float) -> void:
 	_since_hit += delta
 	if _since_hit > 4.0 and health < MAX_HEALTH:
 		health = minf(MAX_HEALTH, health + 15.0 * delta)
-	if global_position.y < -40.0 or (global_position.y > 200.0 and global_position.y < 260.0):
-		_die()
+	# Fell out of the ship: outside every zone for a moment.
+	if Zones.zone_at(global_position) == "":
+		_outside += delta
+		if _outside > 1.5:
+			_outside = 0.0
+			_die()
+	else:
+		_outside = 0.0
 
 
 func _process(delta: float) -> void:

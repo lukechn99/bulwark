@@ -19,12 +19,22 @@ const ZONES := {
 	"corridor": {
 		"title": "Port Service Corridor",
 		"scene": "res://scenes/zones/corridor.tscn",
-		"bounds": AABB(Vector3(-68, -1, -4), Vector3(45.5, 8, 8)),
+		"bounds": AABB(Vector3(-75, -1, -8), Vector3(52.5, 8, 16)),
 	},
 	"bridge": {
 		"title": "Command Bridge",
 		"scene": "res://scenes/zones/bridge.tscn",
 		"bounds": AABB(Vector3(-12, 290, -14), Vector3(54, 24, 28)),
+	},
+	"flightdeck": {
+		"title": "Dorsal Flight Deck",
+		"scene": "res://scenes/zones/flightdeck.tscn",
+		"bounds": AABB(Vector3(-90, 140, -30), Vector3(170, 60, 60)),
+	},
+	"detention": {
+		"title": "Detention Level",
+		"scene": "res://scenes/zones/detention.tscn",
+		"bounds": AABB(Vector3(-40, -160, -14), Vector3(70, 20, 28)),
 	},
 }
 
