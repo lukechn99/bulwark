@@ -45,7 +45,7 @@ var _outside := 0.0
 func _ready() -> void:
 	add_to_group("player")
 	collision_layer = 2
-	collision_mask = 1
+	collision_mask = 1 | Kit.SHIELD_LAYER
 	floor_snap_length = 0.4
 	var shape := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()

@@ -134,9 +134,13 @@ static func cylinder(parent: Node3D, radius: float, height: float, center: Vecto
 
 
 ## An invisible wall.
-static func barrier(parent: Node3D, size: Vector3, center: Vector3) -> void:
+## Layer 5: ray shields. People bump into them; ships fly through.
+const SHIELD_LAYER := 16
+
+
+static func barrier(parent: Node3D, size: Vector3, center: Vector3, layer := WORLD_LAYER) -> void:
 	var body := StaticBody3D.new()
-	body.collision_layer = WORLD_LAYER
+	body.collision_layer = layer
 	body.collision_mask = 0
 	body.position = center
 	var shape := CollisionShape3D.new()

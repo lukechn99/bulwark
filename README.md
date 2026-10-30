@@ -25,6 +25,17 @@ On a computer:
 - **E**: use turbolifts, turrets and consoles. **F** or the corner button: fullscreen.
 - **Esc**: release the mouse.
 
+Flying a fighter (two wait on the flight deck's aft pads):
+
+- **E** climbs in or out. **Space** lifts off; the repulsors climb clear of
+  the trench, or push **W** to break off early.
+- **Mouse** pitches and turns. **A/D** roll. **W/S** set throttle and
+  **Shift** boosts. **Left click** fires.
+- **E** lands when you're slow and low over any deck, including the
+  frigate's repair bay, which fixes your hull.
+- On a phone: swipe to steer, the joystick sets throttle and roll, **JUMP**
+  lifts off and **USE** lands.
+
 On a phone or tablet (landscape):
 
 - **Left thumb**: a joystick appears wherever you touch. Push it all the way
@@ -44,6 +55,7 @@ On a phone or tablet (landscape):
 | Port Service Corridor | 40 m of ribbed corridor with console niches, ending in a lift hall with one turbolift per deck |
 | Command Bridge | A walkway between crew pits, a holotable and forward viewports |
 | Dorsal Flight Deck | A long trench in the top of the hull under a ray shield, with the command tower behind it. Heavy turrets on the hull are crewed from stations in the trench walls, and enemy fighters make strafing runs |
+| Open Space | The frigate *Steadfast* with a repair bay you can land in, and an enemy corvette with four reactor pods to destroy, flak guns and escort fighters |
 | Detention Level | A guard station and a cell block with energy-field doors. Release the cells from the guard console and lead the prisoner to the lift |
 
 The lift hall connects the decks: the bridge straight ahead, the flight
@@ -116,6 +128,9 @@ grate textures, the starfield and the input map.
 - `turret.gd`: crewable twin cannons. While the player is seated, look
   input aims the guns.
 - `prisoner.gd`: the rescued officer who follows you.
+- `pilot_fighter.gd`: the flyable fighter: boarding, lift-off, flight, landing
+  and the chase camera.
+- `zones/space.gd`: the frigate, the corvette and its escorts.
 - `hud.gd`: the heads-up display.
 - `touch_controls.gd`: the joystick, look swipes and buttons for touch
   screens, plus the fullscreen button. Phones also get a lower 3D resolution

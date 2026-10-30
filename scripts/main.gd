@@ -48,6 +48,24 @@ func _ready() -> void:
 	if dev.has("hold"):
 		for action in str(dev["hold"]).split(","):
 			Input.action_press(action)
+	if dev.has("fly") or dev.has("flypose"):
+		await get_tree().process_frame
+		var ship: PilotFighter = get_tree().get_nodes_in_group("pilotable")[0]
+		ship._board(player)
+		ship._lift_off()
+		if dev.has("flypose"):
+			var v: PackedFloat64Array = str(dev["flypose"]).split_floats(",")
+			ship.global_position = Vector3(v[0], v[1], v[2])
+			ship.rotation = Vector3(deg_to_rad(v[4]) if v.size() > 4 else 0.0, deg_to_rad(v[3]), 0)
+			ship.state = PilotFighter.State.FLYING
+			ship.speed = 40.0
+			ship._camera.global_transform = ship._chase_transform()
+			if dev.has("land"):
+				await get_tree().create_timer(1.0).timeout
+				var ev := InputEventAction.new()
+				ev.action = "interact"
+				ev.pressed = true
+				Input.parse_input_event(ev)
 	if dev.has("touchdemo"):
 		_touch_demo()
 	if dev.has("shot"):
@@ -178,6 +196,29 @@ func _connectors() -> void:
 	_lift_pair(con, Vector3(-68.0, 0, 5.5), 180.0, DETENTION_DECK + Vector3(-34.5, 0, 0), -90.0, "detention", "Detention Level")
 
 
+const FIGHTER_PADS := [Vector3(-48, 150, -10), Vector3(-48, 150, 10)]
+var _pad_timers := [0.0, 0.0]
+
+
+func _process(delta: float) -> void:
+	if not is_instance_valid(world):
+		return
+	# Keep a flyable fighter on each pad; replace any that are shot down.
+	var held := [false, false]
+	for f in get_tree().get_nodes_in_group("pilotable"):
+		if f.pad >= 0:
+			held[f.pad] = true
+	for i in FIGHTER_PADS.size():
+		if held[i]:
+			_pad_timers[i] = 0.0
+			continue
+		_pad_timers[i] -= delta
+		if _pad_timers[i] <= 0.0:
+			_pad_timers[i] = 10.0
+			var con := world.get_node("Connectors")
+			con.add_child(PilotFighter.make(FIGHTER_PADS[i], deg_to_rad(-90), i))
+
+
 func _lift_pair(con: Node3D, hall_pos: Vector3, hall_yaw: float, deck_pos: Vector3, deck_yaw: float, deck_zone: String, deck_title: String) -> void:
 	var go := Turbolift.make(hall_pos, hall_yaw, deck_zone, deck_title)
 	var back := Turbolift.make(deck_pos, deck_yaw, "corridor", "Lift Hall")
@@ -194,6 +235,9 @@ func _lift_pair(con: Node3D, hall_pos: Vector3, hall_yaw: float, deck_pos: Vecto
 # --pose    x,y,z,yaw_deg,pitch_deg in world space
 # --hold    comma-separated input actions to hold down (implies --autoplay)
 # --camyaw  orbit the camera around the player by this many degrees
+# --fly     board a flyable fighter and lift off
+# --flypose x,y,z,yaw_deg,pitch_deg: put the boarded fighter in flight there
+# --land    with --flypose: press USE after a second to land
 # --shot    save a screenshot after --wait seconds (default 2.5) and quit
 
 func dev_options() -> Dictionary:

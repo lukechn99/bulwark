@@ -15,6 +15,8 @@ var _start: Control
 var _hit_time := 0.0
 var _hit_kill := false
 var _kills: Label
+var _health_label: Label
+var _flight: Label
 
 const ACCENT := Color(0.55, 0.8, 1.0)
 
@@ -52,6 +54,12 @@ func _ready() -> void:
 	_health_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar_bg.add_child(_health_fill)
 	var hl := _label(root, "HEALTH", 12, Color(1, 1, 1, 0.7))
+	_health_label = hl
+	_flight = _label(root, "", 14, ACCENT)
+	_flight.anchor_top = 1.0
+	_flight.anchor_bottom = 1.0
+	_flight.offset_left = 310
+	_flight.offset_top = -52
 	hl.anchor_top = 1.0
 	hl.anchor_bottom = 1.0
 	hl.offset_left = 32
@@ -91,8 +99,16 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	var player := Zones.player as Player
 	if player:
-		_health_fill.size.x = 256.0 * clampf(player.health / Player.MAX_HEALTH, 0.0, 1.0)
-		_health_fill.color = ACCENT if player.health > 35.0 else Color(1.0, 0.35, 0.25)
+		var hp := player.health
+		var max_hp := Player.MAX_HEALTH
+		var ship := player.vehicle as PilotFighter
+		if ship:
+			hp = ship.hull
+			max_hp = PilotFighter.MAX_HULL
+		_health_fill.size.x = 256.0 * clampf(hp / max_hp, 0.0, 1.0)
+		_health_fill.color = ACCENT if hp > max_hp * 0.35 else Color(1.0, 0.35, 0.25)
+		_health_label.text = "HULL" if ship else "HEALTH"
+		_flight.text = "SPEED %d   THROTTLE %d%%" % [ship.speed, ship.throttle * 100.0] if ship and ship.is_flying() else ""
 		_kills.text = "ENEMIES DOWN  %d" % player.kills if player.kills > 0 else ""
 	_damage.color.a = move_toward(_damage.color.a, 0.0, delta * 0.8)
 	_hit_time = maxf(0.0, _hit_time - delta)
@@ -102,6 +118,12 @@ func _process(delta: float) -> void:
 
 func _draw_crosshair() -> void:
 	var c := _crosshair.size / 2.0
+	var p := Zones.player as Player
+	if p and p.vehicle and p.vehicle.has_method("aim_point"):
+		var cam := get_viewport().get_camera_3d()
+		var aim: Vector3 = p.vehicle.aim_point()
+		if cam and not cam.is_position_behind(aim):
+			c = cam.unproject_position(aim)
 	var aiming := Input.is_action_pressed("aim")
 	var gap := 5.0 if aiming else 9.0
 	var col := Color(1, 1, 1, 0.85)

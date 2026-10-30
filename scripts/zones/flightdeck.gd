@@ -107,7 +107,7 @@ func _trench() -> void:
 	shield.position = Vector3(0, H + 0.3, 0)
 	shield.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(shield)
-	Kit.barrier(self, Vector3(X1 - X0, 1.0, ZW * 2.0), Vector3(0, H + 1.0, 0))
+	Kit.barrier(self, Vector3(X1 - X0, 1.0, ZW * 2.0), Vector3(0, H + 1.0, 0), Kit.SHIELD_LAYER)
 
 
 func _ring(c: Vector3, r: float) -> void:
@@ -174,7 +174,7 @@ func _tower() -> void:
 
 
 func _props() -> void:
-	for i in 5:
+	for i in range(1, 5):   # pad 0 holds the flyable fighters (Main)
 		for side in [-1.0, 1.0]:
 			Kit.starfighter(self, Vector3(-48 + i * 22.0, 0, side * 10.0), deg_to_rad(-90))
 	for c in [Vector3(-60, 0.6, 14), Vector3(-58.4, 0.6, 14.3), Vector3(-25, 0.6, -14), Vector3(5, 0.6, 14.5),

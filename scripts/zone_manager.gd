@@ -30,11 +30,20 @@ const ZONES := {
 		"title": "Dorsal Flight Deck",
 		"scene": "res://scenes/zones/flightdeck.tscn",
 		"bounds": AABB(Vector3(-90, 140, -30), Vector3(170, 60, 60)),
+		"keep": ["space"],
 	},
 	"detention": {
 		"title": "Detention Level",
 		"scene": "res://scenes/zones/detention.tscn",
 		"bounds": AABB(Vector3(-40, -160, -14), Vector3(70, 20, 28)),
+	},
+	# Everything outside the ship. Listed last: zone_at() checks in order, so
+	# this only wins when the player is in no other zone.
+	"space": {
+		"title": "Open Space",
+		"scene": "res://scenes/zones/space.tscn",
+		"bounds": AABB(Vector3(-2600, -500, -2600), Vector3(5200, 1800, 5200)),
+		"keep": ["flightdeck"],
 	},
 }
 
@@ -129,6 +138,8 @@ func _process(delta: float) -> void:
 	var keep := pinned.duplicate()
 	if current != "":
 		keep[current] = true
+		for id in ZONES[current].get("keep", []):
+			keep[id] = true
 	for door in doors:
 		if door.global_position.distance_to(player.global_position) < DOOR_HOLD_RADIUS:
 			for id in door.zones:
