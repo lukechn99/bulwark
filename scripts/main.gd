@@ -73,6 +73,9 @@ func _ready() -> void:
 				Input.parse_input_event(ev)
 	if dev.has("touchdemo"):
 		_touch_demo()
+	if dev.has("nohud"):
+		hud.visible = false
+		player.visible = dev.has("showplayer")
 	if dev.has("shot"):
 		await get_tree().create_timer(float(dev.get("wait", "2.5"))).timeout
 		await RenderingServer.frame_post_draw
@@ -248,6 +251,7 @@ func _lift_pair(con: Node3D, hall_pos: Vector3, hall_yaw: float, deck_pos: Vecto
 # --fly     board a flyable fighter and lift off
 # --flypose x,y,z,yaw_deg,pitch_deg: put the boarded fighter in flight there
 # --land    with --flypose: press USE after a second to land
+# --nohud   hide the HUD and the player (add --showplayer to keep them) for clean shots
 # --shot    save a screenshot after --wait seconds (default 2.5) and quit
 
 func dev_options() -> Dictionary:

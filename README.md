@@ -14,7 +14,7 @@ Star Wars games:
 Every mesh, texture and name here is original. The panel textures, starfield
 and planet are generated in code at startup, and no assets are borrowed.
 
-![Hangar Bay 3](docs/hangar.png)
+![Dorsal Flight Deck](docs/flightdeck.png)
 
 ## Play
 
@@ -77,6 +77,8 @@ Enemies:
   sensor bar) fight in squads that fire together in volleys.
 - **Enemy fighters** loop around the ship and strafe the flight deck.
 
+![Hangar Bay 3 and its compartments](docs/hangar.png)
+![The Bulwark from outside](docs/exterior.png)
 ![Port Service Corridor](docs/corridor.png)
 ![Command Bridge](docs/bridge.png)
 
