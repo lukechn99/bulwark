@@ -1,7 +1,7 @@
 class_name EnemyFighter
 extends CharacterBody3D
-## An original enemy starfighter: a slim fuselage with a red sensor eye and two
-## forward-swept blade wings. It loops around the ship and makes strafing runs
+## An original enemy starfighter: a round sensor pod with a red eye and two
+## curved blade wings (see ShipModels._enemy). It loops around the ship and makes strafing runs
 ## down the flight deck, firing at the player.
 ##
 ## Flies on a loop of waypoints in its parent's space (the flight deck zone).
@@ -36,20 +36,10 @@ func _ready() -> void:
 	sphere.radius = 3.2
 	shape.shape = sphere
 	add_child(shape)
-	_model = Node3D.new()
+	var mi := MeshInstance3D.new()
+	mi.mesh = ShipModels.ship("enemy")
+	_model = mi
 	add_child(_model)
-	Kit.block(_model, Vector3(1.4, 1.1, 6.0), Vector3(0, 0, 0), Look.droid_shell, false)
-	Kit.block(_model, Vector3(1.0, 0.8, 1.6), Vector3(0, 0.1, -3.4), Look.hull_dark, false)
-	var eye := Kit.cylinder(_model, 0.35, 0.2, Vector3(0, 0.1, -4.25), Look.strip_red, false, 12)
-	eye.rotation.x = deg_to_rad(90)
-	for side in [-1.0, 1.0]:
-		# Swept blade wing with a bent tip and a cannon.
-		Kit.block(_model, Vector3(4.6, 0.16, 1.6), Vector3(side * 2.8, 0, 0.6), Look.droid_shell, false, Vector3(0, side * deg_to_rad(-28), 0))
-		Kit.block(_model, Vector3(0.16, 1.8, 1.2), Vector3(side * 5.0, -0.7, -0.6), Look.droid_shell, false, Vector3(0, 0, side * deg_to_rad(15)))
-		Kit.block(_model, Vector3(2.0, 0.18, 0.3), Vector3(side * 2.6, 0.02, 0.0), Look.droid_mark, false, Vector3(0, side * deg_to_rad(-28), 0))
-		Kit.block(_model, Vector3(0.2, 0.2, 2.2), Vector3(side * 1.1, -0.35, -2.4), Look.metal, false)
-	var glow := Kit.cylinder(_model, 0.45, 0.2, Vector3(0, 0, 3.05), Look.strip_red, false, 12)
-	glow.rotation.x = deg_to_rad(90)
 
 
 func _physics_process(delta: float) -> void:

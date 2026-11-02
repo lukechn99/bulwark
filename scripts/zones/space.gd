@@ -18,6 +18,7 @@ var _escort_timer := 3.0
 
 
 func _ready() -> void:
+	_bulwark_hull()
 	Kit.begin(self)
 	_frigate()
 	Kit.end(60.0)
@@ -27,6 +28,31 @@ func _ready() -> void:
 	spawn.position = Vector3(-62, 150.1, 0)
 	spawn.rotation.y = deg_to_rad(-90)
 	add_child(spawn)
+
+
+## The outside of our own ship. The interior zones sit inside it.
+func _bulwark_hull() -> void:
+	var hull: Array = ShipModels.bulwark_hull()
+	var mi := MeshInstance3D.new()
+	mi.name = "BulwarkHull"
+	mi.mesh = hull[0]
+	# The keel would otherwise shade the hangar from the planet light.
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	add_child(_collider(hull[1]))
+
+
+static func _collider(faces: PackedVector3Array) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.collision_layer = Kit.WORLD_LAYER
+	body.collision_mask = 0
+	var shape := ConcavePolygonShape3D.new()
+	shape.backface_collision = true
+	shape.set_faces(faces)
+	var cs := CollisionShape3D.new()
+	cs.shape = shape
+	body.add_child(cs)
+	return body
 
 
 func _process(delta: float) -> void:
@@ -59,16 +85,12 @@ func _frigate() -> void:
 	f.position = FRIGATE_AT
 	f.rotation.y = deg_to_rad(15)
 	add_child(f)
-	# Aft engine section, central bay section, forward hammerhead.
-	Kit.block(f, Vector3(50, 26, 30), Vector3(-47, 4, 0), Look.hull)
-	for z in [-9.0, 0.0, 9.0]:
-		var eng := Kit.cylinder(f, 4.0, 3.0, Vector3(-73, 4, z), Look.engine_glow, false, 16)
-		eng.rotation.z = deg_to_rad(90)
-	Kit.block(f, Vector3(70, 14, 22), Vector3(57, 2, 0), Look.hull)
-	Kit.block(f, Vector3(16, 18, 46), Vector3(86, 2, 0), Look.hull)
-	Kit.block(f, Vector3(72, 1.2, 23), Vector3(57, 9.2, 0), Look.trim_red, false)
-	Kit.block(f, Vector3(18, 9, 14), Vector3(-44, 21, 0), Look.hull_dark)        # tower
-	Kit.block(f, Vector3(18.4, 1.5, 14.4), Vector3(-44, 23, 0), Look.screen_blue, false)
+	# Sculpted hull fore and aft of the bay (see ShipModels.frigate).
+	var hull: Array = ShipModels.frigate()
+	var mi := MeshInstance3D.new()
+	mi.mesh = hull[0]
+	f.add_child(mi)
+	f.add_child(_collider(hull[1]))
 	# The repair bay: a 44 x 12 x 30 room open to space on the -Z side.
 	Kit.block(f, Vector3(44, 10, 32), Vector3(0, -5, 0), Look.hull)              # under the floor
 	Kit.block(f, Vector3(44, 0.4, 30), Vector3(0, -0.2, 0), Look.floor_mat)      # floor
@@ -106,20 +128,11 @@ func _build_corvette() -> void:
 	_corvette.position = CORVETTE_AT
 	_corvette.rotation.y = deg_to_rad(-30)
 	add_child(_corvette)
-	var shell := Look.droid_shell
-	# A long spine with a hammer bow, three frames, and a cluster of drives.
-	Kit.block(_corvette, Vector3(150, 8, 10), Vector3(0, 0, 0), shell)
-	Kit.block(_corvette, Vector3(24, 14, 40), Vector3(80, 0, 0), shell)
-	Kit.block(_corvette, Vector3(26, 2, 42), Vector3(80, 0, 0), Look.droid_mark, false)
-	for x in [-40.0, 0.0, 40.0]:
-		Kit.block(_corvette, Vector3(5, 34, 5), Vector3(x, 0, 0), Look.hull_dark)
-		Kit.block(_corvette, Vector3(5, 5, 34), Vector3(x, 0, 0), Look.hull_dark)
-	for y in [-6.0, 6.0]:
-		for z in [-6.0, 6.0]:
-			var d := Kit.cylinder(_corvette, 3.0, 12.0, Vector3(-80, y, z), shell, true, 12)
-			d.rotation.z = deg_to_rad(90)
-			var g := Kit.cylinder(_corvette, 2.6, 0.5, Vector3(-86.3, y, z), Look.strip_red, false, 12)
-			g.rotation.z = deg_to_rad(90)
+	var hull: Array = ShipModels.corvette()
+	var mi := MeshInstance3D.new()
+	mi.mesh = hull[0]
+	_corvette.add_child(mi)
+	_corvette.add_child(_collider(hull[1]))
 	# Four reactor pods on pylons: the weak points.
 	for spot in [Vector3(-20, 15, 0), Vector3(-20, -15, 0), Vector3(20, 0, 15), Vector3(20, 0, -15)]:
 		var dir: Vector3 = spot.normalized() * Vector3(0, 1, 1)

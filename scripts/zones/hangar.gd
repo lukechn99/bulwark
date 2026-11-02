@@ -4,11 +4,17 @@ extends Node3D
 ## blast door to the service corridor.
 ##
 ## Interior: x -22..22 (mouth at +22), z -28..28, floor y 0, ceiling y 18.
+## Three ship compartments open off each side wall, reaching z ±42.5.
 
 const X0 := -22.0
 const X1 := 22.0
 const ZW := 28.0
 const H := 18.0
+## Side compartments: x ranges of the openings, their height and depth.
+const BAYS := [[-18.4, -6.6], [-5.4, 6.4], [7.6, 19.4]]
+const BAY_H := 6.6
+const BAY_D := 14.0
+const RIBS := [-19.0, -6.0, 7.0, 20.0]
 
 
 func _ready() -> void:
@@ -59,19 +65,60 @@ func _shell() -> void:
 		Kit.block(self, Vector3(0.6, 4.2, 0.8), Vector3(X0 + 0.1, 2.1, side * 1.9), Look.hull_dark)
 		Kit.block(self, Vector3(0.64, 0.4, 0.84), Vector3(X0 + 0.1, 1.2, side * 1.9), Look.trim_red, false)
 	Kit.block(self, Vector3(0.6, 0.8, 4.6), Vector3(X0 + 0.1, 3.6, 0), Look.hull_dark)
-	# Side walls with ribs, a dark lower band and the red stripe.
+	# Side walls: three ship compartments open off each side, framed by pillars.
 	for side in [-1.0, 1.0]:
 		var z: float = side * (ZW + 0.25)
-		Kit.block(self, Vector3(X1 - X0 + 2.0, H, 0.5), Vector3((X0 + X1) / 2.0 + 1.0, H / 2.0, z), Look.hull)
-		Kit.block(self, Vector3(X1 - X0, 3.0, 0.3), Vector3(0, 1.5, side * (ZW - 0.1)), Look.hull_dark)
-		Kit.block(self, Vector3(X1 - X0, 0.35, 0.34), Vector3(0, 3.2, side * (ZW - 0.1)), Look.trim_red, false)
-		for i in 7:
-			var x := X0 + 3.0 + i * 6.5
+		Kit.block(self, Vector3(X1 - X0 + 2.0, H - BAY_H, 0.5), Vector3((X0 + X1) / 2.0 + 1.0, BAY_H + (H - BAY_H) / 2.0, z), Look.hull)
+		var edges := [X0]
+		for bay in BAYS:
+			edges.append(bay[0])
+			edges.append(bay[1])
+		edges.append(X1 + 2.0)
+		for k in range(0, edges.size(), 2):
+			var a: float = edges[k]
+			var b: float = edges[k + 1]
+			Kit.block(self, Vector3(b - a, BAY_H, 0.5), Vector3((a + b) / 2.0, BAY_H / 2.0, z), Look.hull)
+			Kit.block(self, Vector3(b - a, 3.0, 0.3), Vector3((a + b) / 2.0, 1.5, side * (ZW - 0.1)), Look.hull_dark)
+			Kit.block(self, Vector3(b - a, 0.35, 0.34), Vector3((a + b) / 2.0, 3.2, side * (ZW - 0.1)), Look.trim_red, false)
+		for x in RIBS:
 			Kit.block(self, Vector3(1.0, H, 1.2), Vector3(x, H / 2.0, side * (ZW - 0.5)), Look.hull_dark)
-			Kit.strip(self, Vector3(0.12, 3.0, 0.05), Vector3(x + 0.62, 5.0, side * (ZW - 0.5)), Look.strip_warm)
+			Kit.strip(self, Vector3(0.12, 3.0, 0.05), Vector3(x + 0.62, 9.5, side * (ZW - 0.5)), Look.strip_warm)
+		for bay in BAYS:
+			_compartment(bay[0], bay[1], side)
 	# Back-wall ribs.
 	for z in [-22.0, -15.0, -8.0, 8.0, 15.0, 22.0]:
 		Kit.block(self, Vector3(1.2, H, 1.0), Vector3(X0 + 0.5, H / 2.0, z), Look.hull_dark)
+
+
+## One ship compartment off the side wall, behind a blue ray shield.
+func _compartment(a: float, b: float, side: float) -> void:
+	var w := b - a
+	var cx := (a + b) / 2.0
+	var z0 := side * (ZW + 0.5)
+	var cz := side * (ZW + 0.5 + BAY_D / 2.0)
+	Kit.block(self, Vector3(w + 1.0, 0.4, BAY_D), Vector3(cx, -0.2, cz), Look.floor_mat)
+	Kit.block(self, Vector3(w + 1.0, 0.4, BAY_D), Vector3(cx, BAY_H + 0.2, cz), Look.hull_dark)
+	Kit.block(self, Vector3(w + 1.0, BAY_H, 0.5), Vector3(cx, BAY_H / 2.0, side * (ZW + 0.75 + BAY_D)), Look.hull)
+	for x in [a - 0.25, b + 0.25]:
+		Kit.block(self, Vector3(0.5, BAY_H, BAY_D), Vector3(x, BAY_H / 2.0, cz), Look.hull)
+		Kit.block(self, Vector3(0.52, 0.3, BAY_D), Vector3(x, 2.4, cz), Look.trim_red, false)
+	# Ceiling light bars, a lit back panel and a launch-lane marking.
+	for i in 3:
+		Kit.strip(self, Vector3(w - 3.0, 0.05, 0.4), Vector3(cx, BAY_H - 0.03, z0 + side * (2.5 + i * 4.5)), Look.strip_warm)
+	Kit.strip(self, Vector3(w - 2.0, 1.2, 0.05), Vector3(cx, 3.8, side * (ZW + 0.48 + BAY_D)), Look.screen_blue)
+	Kit.strip(self, Vector3(0.2, 0.02, BAY_D - 1.0), Vector3(cx, 0.01, cz), Look.strip_blue)
+	# The ray shield across the mouth, with glowing emitters either side.
+	var shield := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(w, BAY_H)
+	shield.mesh = quad
+	shield.material_override = Look.shield
+	shield.position = Vector3(cx, BAY_H / 2.0, side * (ZW + 0.3))
+	shield.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(shield)
+	for x in [a + 0.1, b - 0.1]:
+		Kit.strip(self, Vector3(0.12, BAY_H - 0.4, 0.12), Vector3(x, BAY_H / 2.0, side * (ZW + 0.3)), Look.strip_blue)
+	Kit.strip(self, Vector3(w, 0.12, 0.12), Vector3(cx, BAY_H - 0.1, side * (ZW + 0.3)), Look.strip_blue)
 
 
 func _pad_outline(c: Vector3, s: float) -> void:
@@ -100,7 +147,7 @@ func _mouth() -> void:
 	shield.rotation.y = deg_to_rad(90)
 	shield.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(shield)
-	Kit.barrier(self, Vector3(0.5, H, ZW * 2.0), Vector3(X1 + 1.5, H / 2.0, 0))
+	Kit.barrier(self, Vector3(0.5, H, ZW * 2.0), Vector3(X1 + 1.5, H / 2.0, 0), Kit.SHIELD_LAYER)
 
 
 func _catwalks() -> void:
@@ -110,8 +157,7 @@ func _catwalks() -> void:
 		Kit.block(self, Vector3(X1 - X0 - 1.0, 0.3, 2.6), Vector3(0, y - 0.15, side * (ZW - 1.3)), Look.hull_dark)
 		Kit.strip(self, Vector3(X1 - X0 - 1.0, 0.04, 0.06), Vector3(0, y - 0.32, inner), Look.strip_blue)
 		Kit.railing(self, Vector3(X0 + 0.6, y, inner), Vector3(X1 - 1.0, y, inner))
-		for i in 7:
-			var x := X0 + 3.0 + i * 6.5
+		for x in RIBS:
 			Kit.block(self, Vector3(0.3, 1.2, 2.2), Vector3(x, y - 0.9, side * (ZW - 1.4)), Look.hull_dark, false, Vector3(side * deg_to_rad(30), 0, 0))
 
 
@@ -127,10 +173,7 @@ func _gallery() -> void:
 
 
 func _props() -> void:
-	Kit.starfighter(self, Vector3(7, 0, -15), deg_to_rad(-90))
-	Kit.starfighter(self, Vector3(7, 0, 15), deg_to_rad(-90))
-	var serviced := Kit.starfighter(self, Vector3(-9, 0, 15), deg_to_rad(-60))
-	serviced.position.y = 0.0
+	# The ships on the pads and in the compartments are flyable: Main places them.
 	# Fuel cells and crate stacks for cover.
 	for c in [Vector3(-12, 0.6, 9), Vector3(-6, 0.6, 9.6), Vector3(-4.5, 0.6, -4), Vector3(2, 0.6, 6),
 			Vector3(11, 0.6, -2), Vector3(16, 0.6, 5), Vector3(-14, 0.6, -10), Vector3(-6, 0.6, -18)]:
@@ -158,3 +201,6 @@ func _lights() -> void:
 			Kit.omni(self, Vector3(x, 11.0, side * (ZW - 5.0)), Color(0.9, 0.93, 1.0), 2.0, 16.0)
 	Kit.omni(self, Vector3(X0 + 3.0, 4.0, 0), Color(1.0, 0.9, 0.8), 1.5, 10.0)
 	Kit.omni(self, Vector3(X0 + 3.0, 9.5, 0), Color(0.4, 0.65, 1.0), 1.5, 12.0)
+	for bay in BAYS:
+		for side in [-1.0, 1.0]:
+			Kit.omni(self, Vector3((bay[0] + bay[1]) / 2.0, 5.2, side * (ZW + 7.0)), Color(0.85, 0.92, 1.0), 2.2, 13.0)

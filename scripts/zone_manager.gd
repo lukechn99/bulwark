@@ -14,7 +14,8 @@ const ZONES := {
 	"hangar": {
 		"title": "Hangar Bay 3",
 		"scene": "res://scenes/zones/hangar.tscn",
-		"bounds": AABB(Vector3(-22.5, -2, -30), Vector3(48, 24, 60)),
+		"bounds": AABB(Vector3(-22.5, -2, -44), Vector3(48, 24, 88)),
+		"keep": ["space"],
 	},
 	"corridor": {
 		"title": "Port Service Corridor",
@@ -43,7 +44,7 @@ const ZONES := {
 		"title": "Open Space",
 		"scene": "res://scenes/zones/space.tscn",
 		"bounds": AABB(Vector3(-2600, -500, -2600), Vector3(5200, 1800, 5200)),
-		"keep": ["flightdeck"],
+		"keep": ["flightdeck", "hangar"],
 	},
 }
 

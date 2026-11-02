@@ -16,6 +16,19 @@ const MAX_HEALTH := 25.0
 
 ## squad -> {"next": msec, "id": int}
 static var _volleys: Dictionary = {}
+static var _chest: ArrayMesh
+
+
+## A tapered chest: narrow at the waist, flaring to broad shoulders.
+static func _chest_mesh() -> ArrayMesh:
+	if not _chest:
+		var b := ShipBuilder.new()
+		var rings := []
+		for r in [[1.24, 0.1, 0.08], [1.36, 0.17, 0.12], [1.55, 0.3, 0.16], [1.7, 0.34, 0.17], [1.78, 0.18, 0.1]]:
+			rings.append(ShipBuilder.ring(Vector3(0, r[0], 0), r[1], r[2], 16, 3.0, Vector3.RIGHT, Vector3.BACK))
+		b.loft(rings, Look.droid_shell)
+		_chest = b.commit()
+	return _chest
 
 var squad := "default"
 var health := MAX_HEALTH
@@ -73,13 +86,20 @@ func _part(parent: Node3D, mesh: Mesh, pos: Vector3, mat: Material, rot := Vecto
 	mi.material_override = mat
 	mi.position = pos
 	mi.rotation = rot
+	if mesh.has_meta("scale"):
+		mi.scale = mesh.get_meta("scale")
 	parent.add_child(mi)
 	return mi
 
 
-func _box(x: float, y: float, z: float) -> BoxMesh:
-	var m := BoxMesh.new()
-	m.size = Vector3(x, y, z)
+## Body segments are smooth ellipsoids sized like the box they replace.
+func _box(x: float, y: float, z: float) -> SphereMesh:
+	var m := SphereMesh.new()
+	m.radius = 0.5
+	m.height = 1.0
+	m.radial_segments = 14
+	m.rings = 7
+	m.set_meta("scale", Vector3(x, y, z) * 1.12)
 	return m
 
 
@@ -88,7 +108,7 @@ func _cyl(r: float, h: float) -> CylinderMesh:
 	m.top_radius = r
 	m.bottom_radius = r
 	m.height = h
-	m.radial_segments = 10
+	m.radial_segments = 14
 	m.rings = 1
 	return m
 
@@ -116,8 +136,7 @@ func _build() -> void:
 	# Pelvis, spine and the wedge chest.
 	_part(body, _box(0.42, 0.14, 0.22), Vector3(0, 1.05, 0), dark)
 	_part(body, _cyl(0.05, 0.3), Vector3(0, 1.2, 0.02), Look.metal)
-	var chest := _part(body, PrismMesh.new(), Vector3(0, 1.5, -0.02), shell, Vector3(deg_to_rad(180), 0, 0))
-	(chest.mesh as PrismMesh).size = Vector3(0.62, 0.48, 0.3)
+	_part(body, _chest_mesh(), Vector3(0, 0, -0.02), shell)
 	_part(body, _box(0.3, 0.08, 0.32), Vector3(0, 1.62, -0.02), mark)
 	# Hammerhead sensor bar on a short neck.
 	var head := Node3D.new()

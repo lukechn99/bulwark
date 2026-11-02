@@ -104,7 +104,7 @@ func _process(delta: float) -> void:
 		var ship := player.vehicle as PilotFighter
 		if ship:
 			hp = ship.hull
-			max_hp = PilotFighter.MAX_HULL
+			max_hp = ship.max_hull
 		_health_fill.size.x = 256.0 * clampf(hp / max_hp, 0.0, 1.0)
 		_health_fill.color = ACCENT if hp > max_hp * 0.35 else Color(1.0, 0.35, 0.25)
 		_health_label.text = "HULL" if ship else "HEALTH"

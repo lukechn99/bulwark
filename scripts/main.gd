@@ -3,10 +3,12 @@ extends Node3D
 ## the player and HUD, then streams in the first zone.
 
 const BRIDGE_DECK := Vector3(0, 300, 0)
+const PLANET_OFFSET := Vector3(3000, -400, 300)
 const FLIGHT_DECK := Vector3(0, 150, 0)
 const DETENTION_DECK := Vector3(0, -150, 0)
 
 var world: Node3D
+var _planet: Node3D
 var player: Player
 
 
@@ -50,7 +52,10 @@ func _ready() -> void:
 			Input.action_press(action)
 	if dev.has("fly") or dev.has("flypose"):
 		await get_tree().process_frame
-		var ship: PilotFighter = get_tree().get_nodes_in_group("pilotable")[0]
+		var ship: PilotFighter = null
+		for f in get_tree().get_nodes_in_group("pilotable"):
+			if not ship or f.global_position.distance_to(player.global_position) < ship.global_position.distance_to(player.global_position):
+				ship = f
 		ship._board(player)
 		ship._lift_off()
 		if dev.has("flypose"):
@@ -97,7 +102,7 @@ func _environment() -> void:
 	env.set_glow_level(5, 0.6)
 	env.fog_enabled = true
 	env.fog_light_color = Color(0.16, 0.2, 0.28)
-	env.fog_density = 0.0035
+	env.fog_density = 0.0008
 	env.fog_sky_affect = 0.0
 	env.adjustment_enabled = true
 	env.adjustment_contrast = 1.08
@@ -121,9 +126,11 @@ func _environment() -> void:
 
 ## Things outside the ship: a planet and distant cruisers of the same fleet.
 func _backdrop() -> void:
-	var sky := Node3D.new()
-	sky.name = "Backdrop"
-	add_child(sky)
+	# The planet and its atmosphere ride along with the camera, like the sky:
+	# always on the horizon, never reachable, so you can't fly into it.
+	_planet = Node3D.new()
+	_planet.name = "Planet"
+	add_child(_planet)
 	var planet := MeshInstance3D.new()
 	var sphere := SphereMesh.new()
 	sphere.radius = 1400.0
@@ -131,54 +138,38 @@ func _backdrop() -> void:
 	sphere.radial_segments = 96
 	sphere.rings = 48
 	planet.mesh = sphere
-	planet.material_override = Look.planet
-	planet.position = Vector3(3000, -400, 300)
+	var surface := Look.planet.duplicate() as StandardMaterial3D
+	surface.disable_fog = true
+	planet.material_override = surface
+	planet.position = PLANET_OFFSET
 	planet.rotation_degrees = Vector3(12, 30, 8)
 	planet.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	sky.add_child(planet)
+	_planet.add_child(planet)
 	var atmosphere := MeshInstance3D.new()
 	var shell := SphereMesh.new()
-	shell.radius = 1440.0
-	shell.height = 2880.0
+	shell.radius = 1450.0
+	shell.height = 2900.0
 	shell.radial_segments = 96
 	shell.rings = 48
 	atmosphere.mesh = shell
 	var haze := Look.shield.duplicate() as StandardMaterial3D
-	haze.albedo_color = Color(0.3, 0.55, 1.0, 0.18)
-	haze.cull_mode = BaseMaterial3D.CULL_FRONT
+	haze.albedo_color = Color(0.3, 0.55, 1.0, 0.22)
+	haze.disable_fog = true
 	atmosphere.material_override = haze
-	atmosphere.position = planet.position
+	atmosphere.position = PLANET_OFFSET
 	atmosphere.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	sky.add_child(atmosphere)
-	Kit.begin(sky)
-	for c in [[Vector3(900, 120, -1300), 35.0, 1.0], [Vector3(1500, -60, 400), -60.0, 0.8], [Vector3(700, 260, 900), 200.0, 0.55]]:
-		_distant_cruiser(sky, c[0], c[1], c[2])
-	Kit.end(100000.0)
-
-
-## An original wedge-hulled cruiser silhouette with a stepped superstructure.
-func _distant_cruiser(parent: Node3D, pos: Vector3, yaw: float, s: float) -> void:
-	var ship := Node3D.new()
-	ship.position = pos
-	ship.rotation_degrees.y = yaw
-	ship.scale = Vector3.ONE * s
-	parent.add_child(ship)
-	var hull := MeshInstance3D.new()
-	var prism := PrismMesh.new()
-	prism.size = Vector3(120, 40, 360)
-	prism.left_to_right = 0.5
-	hull.mesh = prism
-	hull.material_override = Look.hull
-	hull.rotation_degrees = Vector3(-90, 0, 0)
-	hull.scale = Vector3(1, 1, 0.5)
-	ship.add_child(hull)
-	Kit.block(ship, Vector3(30, 26, 60), Vector3(0, 18, 120), Look.hull, false)
-	Kit.block(ship, Vector3(14, 12, 24), Vector3(0, 36, 132), Look.hull_dark, false)
-	var stripe := Kit.block(ship, Vector3(124, 3, 300), Vector3(0, 0, 10), Look.trim_red, false)
-	stripe.scale = Vector3(0.4, 1, 1)
-	for x in [-36.0, 0.0, 36.0]:
-		var eng := Kit.cylinder(ship, 9.0, 4.0, Vector3(x, 2, 182), Look.engine_glow, false)
-		eng.rotation_degrees.x = 90
+	_planet.add_child(atmosphere)
+	# Sister ships of the Bulwark's class holding formation.
+	var fleet := Node3D.new()
+	fleet.name = "Fleet"
+	add_child(fleet)
+	for c in [[Vector3(700, 260, -1500), 0.0], [Vector3(-500, 120, 1600), 0.0], [Vector3(1800, 60, 900), 10.0]]:
+		var ship := MeshInstance3D.new()
+		ship.mesh = ShipModels.sister_ship()
+		ship.position = c[0]
+		ship.rotation_degrees.y = c[1]
+		ship.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		fleet.add_child(ship)
 
 
 ## Doors and turbolifts sit outside the zones because each joins two of them.
@@ -196,27 +187,46 @@ func _connectors() -> void:
 	_lift_pair(con, Vector3(-68.0, 0, 5.5), 180.0, DETENTION_DECK + Vector3(-34.5, 0, 0), -90.0, "detention", "Detention Level")
 
 
-const FIGHTER_PADS := [Vector3(-48, 150, -10), Vector3(-48, 150, 10)]
-var _pad_timers := [0.0, 0.0]
+## Every flyable ship's home: [position, yaw in degrees, type]. Ships live
+## under Connectors so they survive zone streaming; a destroyed one is replaced
+## on its pad after a few seconds.
+const FIGHTER_PADS := [
+	# Hangar Bay 3 floor.
+	[Vector3(7, 0, -15), -90.0, "hammer"], [Vector3(7, 0, 15), -90.0, "warden"], [Vector3(-9, 0, 15), -60.0, "lancer"],
+	# Hangar side compartments (facing out into the hangar).
+	[Vector3(-12.5, 0, -35.5), 180.0, "lancer"], [Vector3(0.5, 0, -35.5), 180.0, "warden"], [Vector3(13.5, 0, -35.5), 180.0, "lancer"],
+	[Vector3(-12.5, 0, 35.5), 0.0, "warden"], [Vector3(0.5, 0, 35.5), 0.0, "lancer"], [Vector3(13.5, 0, 35.5), 0.0, "warden"],
+	# Dorsal flight deck.
+	[Vector3(-48, 150, -10), -90.0, "warden"], [Vector3(-48, 150, 10), -90.0, "lancer"],
+	[Vector3(-26, 150, -10), -90.0, "hammer"], [Vector3(-26, 150, 10), -90.0, "hammer"],
+	[Vector3(-4, 150, -10), -90.0, "lancer"], [Vector3(-4, 150, 10), -90.0, "lancer"],
+	[Vector3(18, 150, -10), -90.0, "warden"], [Vector3(18, 150, 10), -90.0, "warden"],
+	[Vector3(40, 150, -10), -90.0, "hammer"], [Vector3(40, 150, 10), -90.0, "lancer"],
+]
+var _pad_timers: Array[float] = []
 
 
 func _process(delta: float) -> void:
 	if not is_instance_valid(world):
 		return
-	# Keep a flyable fighter on each pad; replace any that are shot down.
-	var held := [false, false]
+	var cam := get_viewport().get_camera_3d()
+	if cam and _planet:
+		_planet.global_position = cam.global_position
+	if _pad_timers.is_empty():
+		_pad_timers.resize(FIGHTER_PADS.size())
+		_pad_timers.fill(0.0)
+	var held := {}
 	for f in get_tree().get_nodes_in_group("pilotable"):
-		if f.pad >= 0:
-			held[f.pad] = true
+		held[f.pad] = true
 	for i in FIGHTER_PADS.size():
-		if held[i]:
-			_pad_timers[i] = 0.0
+		if held.has(i):
+			_pad_timers[i] = 8.0
 			continue
 		_pad_timers[i] -= delta
 		if _pad_timers[i] <= 0.0:
-			_pad_timers[i] = 10.0
-			var con := world.get_node("Connectors")
-			con.add_child(PilotFighter.make(FIGHTER_PADS[i], deg_to_rad(-90), i))
+			_pad_timers[i] = 8.0
+			var pad: Array = FIGHTER_PADS[i]
+			world.get_node("Connectors").add_child(PilotFighter.make(pad[0], deg_to_rad(pad[1]), i, pad[2]))
 
 
 func _lift_pair(con: Node3D, hall_pos: Vector3, hall_yaw: float, deck_pos: Vector3, deck_yaw: float, deck_zone: String, deck_title: String) -> void:

@@ -20,7 +20,6 @@ func _ready() -> void:
 	position = Vector3(0, 150, 0)
 	Kit.begin(self)
 	_trench()
-	_hull()
 	_tower()
 	_props()
 	_stations()
@@ -127,37 +126,6 @@ func _lift_frame() -> void:
 	Kit.block(f, Vector3(3.1, 0.5, 0.6), Vector3(0, 4.25, 0.3), Look.hull_dark)
 
 
-## The hull around the trench, seen from the deck and from the turrets.
-func _hull() -> void:
-	for side in [-1.0, 1.0]:
-		# Flat shoulders either side of the trench, then a long downward slope.
-		Kit.block(self, Vector3(205, 2.0, 50), Vector3(-15, H - 1.0, side * (ZW + 25.0)), Look.hull)
-		Kit.block(self, Vector3(205, 0.3, 1.2), Vector3(-15, H + 0.05, side * (ZW + 49.0)), Look.trim_red, false)
-		Kit.block(self, Vector3(205, 2.0, 46), Vector3(-15, H - 9.0, side * (ZW + 71.0)), Look.hull, false, Vector3(side * deg_to_rad(20), 0, 0))
-		# Panel lines and vents along the shoulders.
-		for i in 9:
-			Kit.block(self, Vector3(14, 0.4, 4), Vector3(-100 + i * 22.0, H + 0.1, side * (ZW + 38.0)), Look.hull_dark, false)
-	# The bow: a long wedge narrowing to a point.
-	var bow := MeshInstance3D.new()
-	var prism := PrismMesh.new()
-	prism.size = Vector3(186, 240, 4)
-	bow.mesh = prism
-	bow.material_override = Look.hull
-	bow.rotation_degrees = Vector3(-90, -90, 0)
-	bow.position = Vector3(87 + 120, H - 2.0, 0)
-	add_child(bow)
-	var keel := MeshInstance3D.new()
-	var keel_prism := PrismMesh.new()
-	keel_prism.size = Vector3(12, 230, 3)
-	keel.mesh = keel_prism
-	keel.material_override = Look.trim_red
-	keel.rotation_degrees = Vector3(-90, -90, 0)
-	keel.position = Vector3(87 + 115, H + 0.6, 0)
-	add_child(keel)
-	# Aft section under the tower.
-	Kit.block(self, Vector3(50, 2.0, 2.0 * ZW + 4.0), Vector3(-96, H - 1.0, 0), Look.hull)
-
-
 func _tower() -> void:
 	# Stepped command tower behind the aft wall, with a lit bridge band near the top.
 	Kit.block(self, Vector3(30, 16, 26), Vector3(-100, H + 8, 0), Look.hull)
@@ -174,9 +142,7 @@ func _tower() -> void:
 
 
 func _props() -> void:
-	for i in range(1, 5):   # pad 0 holds the flyable fighters (Main)
-		for side in [-1.0, 1.0]:
-			Kit.starfighter(self, Vector3(-48 + i * 22.0, 0, side * 10.0), deg_to_rad(-90))
+	# The ships on the deck are all flyable; Main places them on their pads.
 	for c in [Vector3(-60, 0.6, 14), Vector3(-58.4, 0.6, 14.3), Vector3(-25, 0.6, -14), Vector3(5, 0.6, 14.5),
 			Vector3(28, 0.6, -14.2), Vector3(55, 0.6, 13.8), Vector3(57, 0.6, -14)]:
 		Kit.crate(self, c, Vector3(1.4, 1.2, 1.4), randf() * 0.3)

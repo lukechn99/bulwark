@@ -25,7 +25,8 @@ On a computer:
 - **E**: use turbolifts, turrets and consoles. **F** or the corner button: fullscreen.
 - **Esc**: release the mouse.
 
-Flying a fighter (two wait on the flight deck's aft pads):
+Flying (every parked ship is flyable: the hangar floor and its side
+compartments, and the flight deck):
 
 - **E** climbs in or out. **Space** lifts off; the repulsors climb clear of
   the trench, or push **W** to break off early.
@@ -35,6 +36,14 @@ Flying a fighter (two wait on the flight deck's aft pads):
   frigate's repair bay, which fixes your hull.
 - On a phone: swipe to steer, the joystick sets throttle and roll, **JUMP**
   lifts off and **USE** lands.
+
+Three original designs, each flying differently:
+
+| Ship | Feel |
+|---|---|
+| **Lancer** interceptor | A needle with forward-swept, blue-tipped wings. Fastest and most agile, lightly armoured |
+| **Warden** fighter | Swept red-tipped wings with long wingtip cannons. The all-rounder |
+| **Hammer** bomber | A wide gold-trimmed lifting body with outboard engines. Slow and tough, with heavy explosive shots |
 
 On a phone or tablet (landscape):
 
@@ -51,11 +60,11 @@ On a phone or tablet (landscape):
 
 | Zone | Contents |
 |---|---|
-| Hangar Bay 3 | Parked fighters, crates for cover, wall catwalks, a control gallery and a ray shield open to space |
+| Hangar Bay 3 | Flyable ships on the floor and in six side compartments behind blue ray shields, crates for cover, wall catwalks, a control gallery and a ray shield open to space |
 | Port Service Corridor | 40 m of ribbed corridor with console niches, ending in a lift hall with one turbolift per deck |
 | Command Bridge | A walkway between crew pits, a holotable and forward viewports |
 | Dorsal Flight Deck | A long trench in the top of the hull under a ray shield, with the command tower behind it. Heavy turrets on the hull are crewed from stations in the trench walls, and enemy fighters make strafing runs |
-| Open Space | The frigate *Steadfast* with a repair bay you can land in, and an enemy corvette with four reactor pods to destroy, flak guns and escort fighters |
+| Open Space | The *Bulwark*'s own hull (fly back in through the hangar mouth or down onto the flight deck), sister ships of its class, the frigate *Steadfast* with a repair bay you can land in, and an enemy corvette with four reactor pods to destroy, flak guns and escort fighters |
 | Detention Level | A guard station and a cell block with energy-field doors. Release the cells from the guard console and lead the prisoner to the lift |
 
 The lift hall connects the decks: the bridge straight ahead, the flight
@@ -130,7 +139,11 @@ grate textures, the starfield and the input map.
 - `prisoner.gd`: the rescued officer who follows you.
 - `pilot_fighter.gd`: the flyable fighter: boarding, lift-off, flight, landing
   and the chase camera.
-- `zones/space.gd`: the frigate, the corvette and its escorts.
+- `zones/space.gd`: the Bulwark's outer hull, the frigate, the corvette and its escorts.
+- `ship_builder.gd`: builds smooth hulls by lofting cross-sections into a
+  skin, merged into one mesh per material.
+- `ship_models.gd`: every ship design and the flight stats for each flyable
+  type.
 - `hud.gd`: the heads-up display.
 - `touch_controls.gd`: the joystick, look swipes and buttons for touch
   screens, plus the fullscreen button. Phones also get a lower 3D resolution

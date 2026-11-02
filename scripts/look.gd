@@ -41,6 +41,10 @@ var droid_mark: StandardMaterial3D
 var droid_eye: StandardMaterial3D
 var energy_field: StandardMaterial3D
 var armor_stripe: StandardMaterial3D
+var ship_white: StandardMaterial3D
+var ship_grey: StandardMaterial3D
+var canopy: StandardMaterial3D
+var accent_gold: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -75,6 +79,13 @@ func _ready() -> void:
 	droid_mark = _lit(Color(0.85, 0.42, 0.08), 0.5, 0.2, [], 1.0)
 	droid_eye = _glow(Color(1.0, 0.55, 0.1), 5.0)
 	energy_field = _clear(Color(1.0, 0.2, 0.12, 0.35), true)
+	var fine := _panel_textures(512, 4, 0.04, 77)
+	ship_white = _lit(Color(0.86, 0.87, 0.88), 0.32, 0.25, fine, 0.9)
+	ship_grey = _lit(Color(0.36, 0.38, 0.41), 0.35, 0.55, fine, 0.9)
+	canopy = _lit(Color(0.05, 0.09, 0.14), 0.05, 0.9, [], 1.0)
+	canopy.rim_enabled = true
+	canopy.rim = 0.6
+	accent_gold = _lit(Color(0.78, 0.55, 0.16), 0.3, 0.7, [], 1.0)
 	armor_stripe = _lit(Color(0.12, 0.32, 0.62), 0.4, 0.1, [], 1.0)
 
 
