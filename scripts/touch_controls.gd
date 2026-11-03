@@ -68,7 +68,8 @@ func _input(event: InputEvent) -> void:
 	# The fullscreen button also answers mouse clicks on desktop.
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if _button_at(event.position) == "fullscreen":
-			toggle_fullscreen()
+			if not OS.has_feature("web"):   # the page itself handles it on the web
+				toggle_fullscreen()
 			get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("fullscreen"):
@@ -88,7 +89,10 @@ func _touch(e: InputEventScreenTouch) -> void:
 			_enter_touch_mode()
 		var button := _button_at(e.position)
 		if button == "fullscreen":
-			toggle_fullscreen()
+			if not OS.has_feature("web"):
+				toggle_fullscreen()
+			elif not _web_can_fullscreen():
+				_ios_tip()
 		elif button == "aim":
 			aim_on = not aim_on
 			if aim_on:
@@ -168,6 +172,9 @@ func _enter_touch_mode() -> void:
 
 
 static func toggle_fullscreen() -> void:
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("window.bulwarkFullscreen && window.bulwarkFullscreen()", true)
+		return
 	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	else:
@@ -176,7 +183,44 @@ static func toggle_fullscreen() -> void:
 
 # --- drawing ------------------------------------------------------------------
 
-func _process(_delta: float) -> void:
+# --- web fullscreen -------------------------------------------------------------
+# Browsers only allow fullscreen inside the tap or click that asks for it, and
+# Godot handles input a frame later, which phones reject. So the page catches
+# taps itself (see html/head_include in export_presets.cfg): every half second
+# we tell it where the button is, in canvas pixels.
+
+var _fs_publish := 0.0
+var _web_fullscreen := false
+
+
+func _publish_fullscreen_button(delta: float) -> void:
+	if not OS.has_feature("web"):
+		return
+	_fs_publish -= delta
+	if _fs_publish > 0.0:
+		return
+	_fs_publish = 0.5
+	var spec: Array = _buttons()["fullscreen"]
+	var xf := get_viewport().get_final_transform()
+	var c: Vector2 = xf * (spec[0] as Vector2)
+	var r: float = spec[1] * xf.x.x + 14.0
+	JavaScriptBridge.eval("window.bulwarkFsButton = {x: %f, y: %f, r: %f};" % [c.x, c.y, r], true)
+	_web_fullscreen = bool(JavaScriptBridge.eval("!!(document.fullscreenElement || document.webkitFullscreenElement)", true))
+
+
+func _web_can_fullscreen() -> bool:
+	return bool(JavaScriptBridge.eval("!!window.bulwarkCanFullscreen", true))
+
+
+func _ios_tip() -> void:
+	var hud := get_tree().get_first_node_in_group("hud")
+	if hud:
+		hud.show_message("For fullscreen on iPhone: tap Share, then Add to Home Screen")
+		get_tree().create_timer(4.0).timeout.connect(func(): if is_instance_valid(hud): hud.show_message(""))
+
+
+func _process(delta: float) -> void:
+	_publish_fullscreen_button(delta)
 	# Track the visible area directly; anchors alone left this at zero size
 	# when it was created inside the HUD.
 	var screen := get_viewport_rect().size
@@ -189,7 +233,8 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	var buttons := _buttons()
 	var fs: Array = buttons["fullscreen"]
-	_draw_fullscreen_icon(fs[0], DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN)
+	var full := _web_fullscreen if OS.has_feature("web") else DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+	_draw_fullscreen_icon(fs[0], full)
 	if not touch_mode:
 		return
 	if size.y > size.x:

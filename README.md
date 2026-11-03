@@ -53,8 +53,9 @@ On a phone or tablet (landscape):
 - **FIRE**: hold to shoot. Drag your thumb across it to aim while firing.
 - **AIM** toggles the zoom. **JUMP** jumps, and **USE** rides turbolifts,
   crews turrets and works consoles.
-- **Fullscreen**: tap the corner button. iPhone Safari has no fullscreen
-  mode, so choose Share → Add to Home Screen and launch the game from there.
+- **Fullscreen**: tap the corner button (Android and iPad). iPhone browsers
+  don't allow fullscreen web pages, so choose Share → Add to Home Screen and
+  launch the game from there; tapping the button on an iPhone shows this tip.
 
 ## What's in the prototype
 
