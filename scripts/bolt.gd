@@ -12,6 +12,8 @@ var damage := 10.0
 var color := Color.WHITE
 var _age := 0.0
 var heavy := false
+## Capital-ship bolts: a big flash where they strike a hull.
+var huge := false
 var _exclude: Array[RID] = []
 
 
@@ -39,6 +41,7 @@ static func fire(parent: Node, from: Vector3, dir: Vector3, by: Node3D, mat: Sta
 		b._exclude.append((by as CollisionObject3D).get_rid())
 	Fx.muzzle_flash(parent, from, b.color)
 	b.heavy = thickness > 2.0
+	b.huge = thickness >= 8.0
 	return b
 
 
@@ -59,7 +62,9 @@ func _physics_process(delta: float) -> void:
 			var killed: bool = target.take_damage(damage, from)
 			if is_instance_valid(shooter) and shooter.has_method("on_hit_target"):
 				shooter.on_hit_target(killed)
-		if heavy:
+		if huge:
+			Fx.blast(get_parent(), hit.position, 18.0)
+		elif heavy:
 			Fx.explosion(get_parent(), hit.position)
 		else:
 			Fx.impact(get_parent(), hit.position, hit.normal, color)

@@ -160,14 +160,63 @@ static func bulwark_hull() -> Array:
 
 
 ## A sister ship of the same class, with its own command tower, centred on its
-## origin. No collision; for the backdrop.
-static func sister_ship() -> ArrayMesh:
+## origin. Returns [mesh, collision faces].
+static func sister_ship() -> Array:
 	if not _cache.has("sister"):
 		var b := ShipBuilder.new()
+		b.collect_faces = true
 		_capital(b, Vector3(0, -150, 0), false)
 		_tower(b, Vector3(-100, 16, 0))
-		_cache["sister"] = b.commit()
+		_cache["sister"] = [b.commit(), b.faces]
 	return _cache["sister"]
+
+
+## The enemy dreadnought (centred, nose +X): a swollen armoured core with a
+## glowing red sensor band, and two great pincer arms curving forward from
+## its flanks. Returns [mesh, collision faces].
+static func dreadnought() -> Array:
+	if _cache.has("dreadnought"):
+		return _cache["dreadnought"]
+	var b := ShipBuilder.new()
+	b.collect_faces = true
+	var shell := Look.droid_shell
+	var C := func(x: float, r: float, h: float) -> PackedVector3Array:
+		return ShipBuilder.ring(Vector3(x, 0, 0), r, h, 24, 2.3, Vector3.BACK, Vector3.UP)
+	b.loft([C.call(-150, 18, 14), C.call(-120, 48, 36), C.call(-60, 82, 60), C.call(0, 92, 66),
+		C.call(70, 74, 52), C.call(125, 34, 24), C.call(150, 6, 5)], shell)
+	b.loft([C.call(-14, 93.5, 67), C.call(14, 93, 66.5)], Look.droid_mark, true, false, false)
+	b.loft([C.call(96, 66, 47), C.call(104, 61, 43)], Look.strip_red, true, false, false)
+	# Pincer arms: rings swept along a curve that bows outward from each flank
+	# and hooks back in ahead of the bow, like a crab's claws.
+	for side in [-1.0, 1.0]:
+		var p0 := Vector3(-30, 0, side * 80.0)
+		var p1 := Vector3(110, 0, side * 230.0)
+		var p2 := Vector3(230, 0, side * 60.0)
+		var rings := []
+		var steps := 12
+		for i in steps:
+			var t := float(i) / (steps - 1)
+			var center := p0.lerp(p1, t).lerp(p1.lerp(p2, t), t)
+			var tangent := (2.0 * (1.0 - t) * (p1 - p0) + 2.0 * t * (p2 - p1)).normalized()
+			var across := tangent.cross(Vector3.UP).normalized()
+			var half_w := lerpf(30.0, 5.0, t)
+			var half_h := lerpf(44.0, 8.0, t * t)
+			rings.append(ShipBuilder.ring(center, half_w, half_h, 16, 2.6, across, Vector3.UP))
+		b.loft(rings, shell)
+		b.sphere(9.0, p2, Look.strip_red, Vector3(1, 1.3, 1))
+		b.sphere(0.5, p0.lerp(p1, 0.25).lerp(p1.lerp(p2, 0.25), 0.25), Look.droid_mark, Vector3(60, 80, 60))
+	# Dorsal and ventral fins, and the drive cluster at the stern.
+	for up in [-1.0, 1.0]:
+		var F := func(y: float, half_chord: float, cz: float) -> PackedVector3Array:
+			return ShipBuilder.ring(Vector3(cz, y, 0), half_chord, 4.0 + (1.0 - absf(y) / 120.0) * 4.0, 12, 3.0, Vector3.RIGHT, Vector3.BACK)
+		b.loft([F.call(up * 50.0, 70.0, -30.0), F.call(up * 95.0, 40.0, -55.0), F.call(up * 120.0, 10.0, -75.0)], shell)
+	for y in [-24.0, 24.0]:
+		for z in [-24.0, 24.0]:
+			b.tube(16.0, 13.0, 30.0, Vector3(-160, y, z), Look.hull_dark, Vector3.RIGHT, 18)
+			b.tube(12.0, 12.0, 1.0, Vector3(-175.6, y, z), Look.strip_red, Vector3.RIGHT, 18)
+	var result := [b.commit(), b.faces]
+	_cache["dreadnought"] = result
+	return result
 
 
 static func _capital(b: ShipBuilder, o: Vector3, trench: bool) -> void:
@@ -181,8 +230,11 @@ static func _capital(b: ShipBuilder, o: Vector3, trench: bool) -> void:
 		var x: float = sec[0]
 		var w: float = sec[1]
 		var bot: float = sec[2]
-		var nz := minf(20.0, w * 0.4)
-		var nb := 148.0 if trench and x >= -70.0 and x <= 70.0 else top
+		# The trench notch: wide enough for the side hangars where the trench
+		# runs, and collapsed to nothing elsewhere so the deck plating is plain hull.
+		var in_trench: bool = trench and x >= -70.0 and x <= 70.0
+		var nz := 38.0 if in_trench else 0.0
+		var nb := 148.0 if in_trench else top
 		var pts := PackedVector3Array()
 		for zy in [[w, top], [nz, top], [nz, nb], [-nz, nb], [-nz, top], [-w, top], [-w, top - lip],
 				[-0.7 * w, bot], [0.7 * w, bot], [w, top - lip]]:

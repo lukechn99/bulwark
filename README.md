@@ -26,7 +26,7 @@ On a computer:
 - **Esc**: release the mouse.
 
 Flying (every parked ship is flyable: the hangar floor and its side
-compartments, and the flight deck):
+compartments, the flight deck and its side hangars, and the planet outpost):
 
 - **E** climbs in or out. **Space** lifts off; the repulsors climb clear of
   the trench, or push **W** to break off early.
@@ -63,8 +63,9 @@ On a phone or tablet (landscape):
 | Hangar Bay 3 | Flyable ships on the floor and in six side compartments behind blue ray shields, crates for cover, wall catwalks, a control gallery and a ray shield open to space |
 | Port Service Corridor | 40 m of ribbed corridor with console niches, ending in a lift hall with one turbolift per deck |
 | Command Bridge | A walkway between crew pits, a holotable and forward viewports |
-| Dorsal Flight Deck | A long trench in the top of the hull under a ray shield, with the command tower behind it. Heavy turrets on the hull are crewed from stations in the trench walls, and enemy fighters make strafing runs |
-| Open Space | The *Bulwark*'s own hull (fly back in through the hangar mouth or down onto the flight deck), sister ships of its class, the frigate *Steadfast* with a repair bay you can land in, and an enemy corvette with four reactor pods to destroy, flak guns and escort fighters |
+| Dorsal Flight Deck | A long trench in the top of the hull under a ray shield, with eight side hangars and the command tower behind it. Heavy turrets on the hull are crewed from stations in the trench walls, and enemy fighters make strafing runs |
+| Open Space | The *Bulwark*'s own hull (fly back in through the hangar mouth or down onto the flight deck), five sister ships of its class trading broadsides with two enemy dreadnoughts (crescent-clawed, original design) and their corvettes, the frigate *Steadfast* with a repair bay you can land in, and an enemy corvette with four reactor pods to destroy, flak guns and escort fighters |
+| Planet Surface | Fly out toward the planet until you enter its atmosphere, then come down over a basin of pine forest ringed by snowy mountains to a forward outpost held by droids. Land on the pad, fight on foot, and climb back out to return to space |
 | Detention Level | A guard station and a cell block with energy-field doors. Release the cells from the guard console and lead the prisoner to the lift |
 
 The lift hall connects the decks: the bridge straight ahead, the flight
@@ -77,7 +78,11 @@ Enemies:
   sensor bar) fight in squads that fire together in volleys.
 - **Enemy fighters** loop around the ship and strafe the flight deck.
 
+![Flight deck side hangars](docs/flightdeck-bays.png)
 ![Hangar Bay 3 and its compartments](docs/hangar.png)
+![Coming in over the planet](docs/planet-approach.png)
+![The forward outpost](docs/planet.png)
+![An enemy dreadnought](docs/dreadnought.png)
 ![The Bulwark from outside](docs/exterior.png)
 ![Port Service Corridor](docs/corridor.png)
 ![Command Bridge](docs/bridge.png)
@@ -141,6 +146,7 @@ grate textures, the starfield and the input map.
 - `prisoner.gd`: the rescued officer who follows you.
 - `pilot_fighter.gd`: the flyable fighter: boarding, lift-off, flight, landing
   and the chase camera.
+- `zones/planet.gd`: the planet surface: terrain, forest, outpost and its defenders.
 - `zones/space.gd`: the Bulwark's outer hull, the frigate, the corvette and its escorts.
 - `ship_builder.gd`: builds smooth hulls by lofting cross-sections into a
   skin, merged into one mesh per material.

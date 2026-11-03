@@ -45,6 +45,10 @@ var ship_white: StandardMaterial3D
 var ship_grey: StandardMaterial3D
 var canopy: StandardMaterial3D
 var accent_gold: StandardMaterial3D
+var terrain: StandardMaterial3D
+var tree_bark: StandardMaterial3D
+var tree_leaves: StandardMaterial3D
+var planet_sky: Sky
 
 
 func _ready() -> void:
@@ -86,6 +90,10 @@ func _ready() -> void:
 	canopy.rim_enabled = true
 	canopy.rim = 0.6
 	accent_gold = _lit(Color(0.78, 0.55, 0.16), 0.3, 0.7, [], 1.0)
+	terrain = _terrain_material()
+	tree_bark = _lit(Color(0.3, 0.22, 0.15), 0.9, 0.0, [], 1.0)
+	tree_leaves = _lit(Color(0.16, 0.3, 0.14), 0.85, 0.0, [], 1.0)
+	planet_sky = _day_sky()
 	armor_stripe = _lit(Color(0.12, 0.32, 0.62), 0.4, 0.1, [], 1.0)
 
 
@@ -161,6 +169,41 @@ func _clear(color: Color, additive := false) -> StandardMaterial3D:
 	if additive:
 		m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	return m
+
+
+## Ground: vertex colours (grass, rock, snow by height) over fine noise detail.
+func _terrain_material() -> StandardMaterial3D:
+	var noise := FastNoiseLite.new()
+	noise.seed = 4
+	noise.frequency = 0.05
+	noise.fractal_octaves = 4
+	var tex := NoiseTexture2D.new()
+	tex.width = 256
+	tex.height = 256
+	tex.seamless = true
+	tex.noise = noise
+	var ramp := Gradient.new()
+	ramp.colors = PackedColorArray([Color(0.72, 0.72, 0.72), Color(1.05, 1.05, 1.05)])
+	tex.color_ramp = ramp
+	var m := StandardMaterial3D.new()
+	m.vertex_color_use_as_albedo = true
+	m.albedo_texture = tex
+	m.uv1_scale = Vector3.ONE * 6.0
+	m.roughness = 0.95
+	return m
+
+
+## A clear daytime sky for the planet surface.
+func _day_sky() -> Sky:
+	var mat := ProceduralSkyMaterial.new()
+	mat.sky_top_color = Color(0.22, 0.45, 0.82)
+	mat.sky_horizon_color = Color(0.68, 0.8, 0.92)
+	mat.ground_horizon_color = Color(0.6, 0.7, 0.8)
+	mat.ground_bottom_color = Color(0.3, 0.35, 0.3)
+	mat.sun_angle_max = 20.0
+	var sky := Sky.new()
+	sky.sky_material = mat
+	return sky
 
 
 func _planet_material() -> StandardMaterial3D:

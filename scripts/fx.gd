@@ -17,6 +17,11 @@ static func explosion(parent: Node, pos: Vector3) -> void:
 	_burst(parent, pos, Color(2.5, 2.2, 2.0), 0.2, 1.0, 0.25, 0.0, 0.0)
 
 
+## A large impact for capital-ship fire, `size` metres across at its peak.
+static func blast(parent: Node, pos: Vector3, size: float) -> void:
+	_burst(parent, pos, Color(4.0, 1.8, 0.6), size * 0.1, size * 0.5, 0.8, 8.0, size * 5.0)
+
+
 static func _burst(parent: Node, pos: Vector3, color: Color, r0: float, r1: float, time: float, light_energy: float, light_range: float) -> void:
 	if not is_instance_valid(parent) or not parent.is_inside_tree():
 		return

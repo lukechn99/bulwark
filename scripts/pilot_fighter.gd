@@ -18,6 +18,8 @@ const LAND_SPEED := 45.0
 ## The battle area: fighters are steered back if they stray this far.
 const AREA_CENTER := Vector3(0, 150, 0)
 const AREA_RADIUS := 2200.0
+## Which way the planet lies (it rides with the camera; see Main).
+const PLANET_DIR := Vector3(0.986, -0.132, 0.099)
 
 var state := State.LANDED
 ## One of ShipModels.TYPES; its stats are copied in below.
@@ -233,9 +235,20 @@ func _fly(delta: float) -> void:
 	var boosting := Input.is_action_pressed("sprint")
 	var target := _boost_speed if boosting else lerpf(_min_speed, _max_speed, throttle)
 	speed = move_toward(speed, target, 35.0 * delta)
-	# Keep the fight in the battle area.
-	var out := global_position - AREA_CENTER
-	if out.length() > AREA_RADIUS:
+	# Keep the fight in the battle area: around the fleet in space, inside the
+	# mountain ring on the planet. Flying out toward the planet is allowed;
+	# that's how you reach it.
+	var center := AREA_CENTER
+	var radius := AREA_RADIUS
+	var out := global_position - center
+	var heading_down := false
+	if Zones.current == "planet":
+		center = Zones.PLANET_ORIGIN + Vector3(0, global_position.y - Zones.PLANET_ORIGIN.y, 0)
+		radius = 1450.0
+		out = global_position - center
+	else:
+		heading_down = out.normalized().dot(PLANET_DIR) > 0.7
+	if out.length() > radius and not heading_down:
 		var home := -out.normalized()
 		var fwd := -global_transform.basis.z
 		look_at(global_position + fwd.slerp(home, clampf(0.8 * delta, 0.0, 1.0)), global_transform.basis.y)
@@ -313,6 +326,15 @@ func _docked_check() -> void:
 			_message("Docked — hull repaired")
 			get_tree().create_timer(2.5).timeout.connect(func(): _message(""))
 			return
+
+
+## Put the fighter in flight at `xform` (used for atmospheric entry and exit).
+func place_in_flight(xform: Transform3D, new_speed: float) -> void:
+	global_transform = xform
+	state = State.FLYING
+	speed = new_speed
+	_gear.visible = false
+	_camera.global_transform = _chase_transform()
 
 
 func _chase_transform() -> Transform3D:

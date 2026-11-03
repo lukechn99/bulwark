@@ -12,6 +12,10 @@ const X1 := 70.0
 const ZW := 18.0
 const H := 16.0
 const FIGHTERS := 3
+## Side hangars in the trench walls: x ranges of the openings, height, depth.
+const BAYS := [[-25.5, -13.5], [-6.0, 6.0], [13.3, 25.3], [32.7, 44.7]]
+const BAY_H := 7.0
+const BAY_D := 14.0
 
 var _respawn := 4.0
 
@@ -74,19 +78,41 @@ func _trench() -> void:
 	for x in [-30.0, 0.0, 30.0]:
 		for side in [-1.0, 1.0]:
 			_ring(Vector3(x, 0.01, side * 10.0), 5.5)
-	# Trench walls: dark lower band, red stripe, ribs, and a catwalk halfway up.
+	# Trench walls: four ship hangars open off each side below the catwalk;
+	# above them the wall carries the catwalk, ribs and the red stripe.
 	for side in [-1.0, 1.0]:
 		var z: float = side * (ZW + 0.5)
-		Kit.block(self, Vector3(X1 - X0 + 1.0, H, 1.0), Vector3(0, H / 2.0, z), Look.hull)
-		Kit.block(self, Vector3(X1 - X0, 3.0, 0.3), Vector3(0, 1.5, side * (ZW - 0.1)), Look.hull_dark)
-		Kit.block(self, Vector3(X1 - X0, 0.35, 0.34), Vector3(0, 3.2, side * (ZW - 0.1)), Look.trim_red, false)
+		Kit.block(self, Vector3(X1 - X0 + 1.0, H - BAY_H, 1.0), Vector3(0, BAY_H + (H - BAY_H) / 2.0, z), Look.hull)
+		var edges := [X0 - 0.5]
+		for bay in BAYS:
+			edges.append(bay[0])
+			edges.append(bay[1])
+		edges.append(X1 + 0.5)
+		for k in range(0, edges.size(), 2):
+			var a: float = edges[k]
+			var b: float = edges[k + 1]
+			Kit.block(self, Vector3(b - a, BAY_H, 1.0), Vector3((a + b) / 2.0, BAY_H / 2.0, z), Look.hull)
+			Kit.block(self, Vector3(b - a, 3.0, 0.3), Vector3((a + b) / 2.0, 1.5, side * (ZW - 0.1)), Look.hull_dark)
+			Kit.block(self, Vector3(b - a, 0.35, 0.34), Vector3((a + b) / 2.0, 3.2, side * (ZW - 0.1)), Look.trim_red, false)
 		Kit.block(self, Vector3(X1 - X0, 0.3, 2.2), Vector3(0, 8.0, side * (ZW - 1.1)), Look.hull_dark)
 		Kit.strip(self, Vector3(X1 - X0, 0.05, 0.06), Vector3(0, 7.84, side * (ZW - 2.2)), Look.strip_blue)
 		Kit.railing(self, Vector3(X0 + 0.5, 8.15, side * (ZW - 2.2)), Vector3(X1 - 0.5, 8.15, side * (ZW - 2.2)))
 		for i in 15:
 			var x := X0 + 2.0 + i * 9.7
+			var in_bay := false
+			for bay in BAYS:
+				if x > bay[0] - 0.7 and x < bay[1] + 0.7:
+					in_bay = true
+			if in_bay:
+				# Over a hangar mouth the rib only runs above the opening.
+				Kit.block(self, Vector3(1.2, H - BAY_H, 1.0), Vector3(x, BAY_H + (H - BAY_H) / 2.0, side * (ZW - 0.3)), Look.hull_dark)
+				continue
 			Kit.block(self, Vector3(1.2, H, 1.0), Vector3(x, H / 2.0, side * (ZW - 0.3)), Look.hull_dark)
 			Kit.strip(self, Vector3(0.1, 3.0, 0.06), Vector3(x + 0.66, 5.0, side * (ZW - 0.3)), Look.strip_warm)
+		for bay in BAYS:
+			_compartment(bay[0], bay[1], side)
+		# Roof over the hangars, level with the hull top; the turrets sit on it.
+		Kit.block(self, Vector3(X1 - X0 + 2.0, 1.0, 19.0), Vector3(0, H - 0.5, side * (ZW + 1.0 + 9.5)), Look.hull)
 		# Lip along the top edge.
 		Kit.block(self, Vector3(X1 - X0 + 2.0, 0.8, 1.6), Vector3(0, H + 0.1, side * (ZW + 0.2)), Look.hull_dark)
 	# End walls: the aft wall holds the lift, the bow wall is a sealed blast door.
@@ -150,6 +176,35 @@ func _props() -> void:
 		Kit.crate(self, c, Vector3(2.8, 1.5, 1.2))
 
 
+## One side hangar behind a blue ray shield, with a ship inside (placed by Main).
+func _compartment(a: float, b: float, side: float) -> void:
+	var w := b - a
+	var cx := (a + b) / 2.0
+	var z0 := side * (ZW + 1.0)
+	var cz := side * (ZW + 1.0 + BAY_D / 2.0)
+	Kit.block(self, Vector3(w + 1.0, 0.4, BAY_D), Vector3(cx, -0.2, cz), Look.floor_mat)
+	Kit.block(self, Vector3(w + 1.0, 0.4, BAY_D), Vector3(cx, BAY_H + 0.2, cz), Look.hull_dark)
+	Kit.block(self, Vector3(w + 1.0, BAY_H, 0.5), Vector3(cx, BAY_H / 2.0, side * (ZW + 1.25 + BAY_D)), Look.hull)
+	for x in [a - 0.25, b + 0.25]:
+		Kit.block(self, Vector3(0.5, BAY_H, BAY_D), Vector3(x, BAY_H / 2.0, cz), Look.hull)
+		Kit.block(self, Vector3(0.52, 0.3, BAY_D), Vector3(x, 2.4, cz), Look.trim_red, false)
+	for i in 3:
+		Kit.strip(self, Vector3(w - 3.0, 0.05, 0.4), Vector3(cx, BAY_H - 0.03, z0 + side * (2.5 + i * 4.5)), Look.strip_warm)
+	Kit.strip(self, Vector3(w - 2.0, 1.2, 0.05), Vector3(cx, 4.0, side * (ZW + 0.98 + BAY_D)), Look.screen_blue)
+	Kit.strip(self, Vector3(0.2, 0.02, BAY_D - 1.0), Vector3(cx, 0.01, cz), Look.strip_blue)
+	var shield := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(w, BAY_H)
+	shield.mesh = quad
+	shield.material_override = Look.shield
+	shield.position = Vector3(cx, BAY_H / 2.0, side * (ZW + 0.5))
+	shield.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(shield)
+	for x in [a + 0.1, b - 0.1]:
+		Kit.strip(self, Vector3(0.12, BAY_H - 0.4, 0.12), Vector3(x, BAY_H / 2.0, side * (ZW + 0.5)), Look.strip_blue)
+	Kit.strip(self, Vector3(w, 0.12, 0.12), Vector3(cx, BAY_H - 0.1, side * (ZW + 0.5)), Look.strip_blue)
+
+
 func _stations() -> void:
 	# A gunnery alcove in each wall below the manned turrets.
 	for side in [-1.0, 1.0]:
@@ -165,5 +220,8 @@ func _lights() -> void:
 			var s := Kit.spot(self, Vector3(x, H - 1.0, side * (ZW - 1.5)), Color(1.0, 0.95, 0.86), 7.0, 26.0, 50.0)
 			s.rotation_degrees = Vector3(-70, 180 if side < 0 else 0, 0)
 	Kit.omni(self, Vector3(X0 + 4.0, 4.0, 0), Look.STRIP_BLUE, 1.5, 10.0)
+	for bay in BAYS:
+		for side in [-1.0, 1.0]:
+			Kit.omni(self, Vector3((bay[0] + bay[1]) / 2.0, 5.6, side * (ZW + 8.0)), Color(0.85, 0.92, 1.0), 2.2, 13.0)
 	for side in [-1.0, 1.0]:
 		Kit.omni(self, Vector3(-40, 3.0, side * (ZW - 2.5)), Color(1.0, 0.6, 0.3), 1.2, 6.0)

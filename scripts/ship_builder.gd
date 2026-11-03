@@ -195,6 +195,20 @@ func add_arrays(arrays: Array, mat: Material, xform := Transform3D.IDENTITY) -> 
 	_parts[mat] = [verts, norms, tans, uvs, idx]
 
 
+## Add everything from another builder, moved by `xform`.
+func merge(other: ShipBuilder, xform := Transform3D.IDENTITY) -> void:
+	for mat in other._parts:
+		var part: Array = other._parts[mat]
+		var arr := []
+		arr.resize(Mesh.ARRAY_MAX)
+		arr[Mesh.ARRAY_VERTEX] = part[0]
+		arr[Mesh.ARRAY_NORMAL] = part[1]
+		arr[Mesh.ARRAY_TANGENT] = part[2]
+		arr[Mesh.ARRAY_TEX_UV] = part[3]
+		arr[Mesh.ARRAY_INDEX] = part[4]
+		add_arrays(arr, mat, xform)
+
+
 func commit() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	for mat in _parts:
@@ -209,6 +223,20 @@ func commit() -> ArrayMesh:
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
 		mesh.surface_set_material(mesh.get_surface_count() - 1, mat)
 	return mesh
+
+
+## A static body with a trimesh collider made from triangle `faces`.
+static func body_from_faces(faces: PackedVector3Array) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.collision_layer = Kit.WORLD_LAYER
+	body.collision_mask = 0
+	var shape := ConcavePolygonShape3D.new()
+	shape.backface_collision = true
+	shape.set_faces(faces)
+	var cs := CollisionShape3D.new()
+	cs.shape = shape
+	body.add_child(cs)
+	return body
 
 
 ## Static collision matching everything added (needs collect_faces = true).

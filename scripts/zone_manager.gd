@@ -10,6 +10,9 @@ extends Node
 signal zone_changed(id: String, title: String)
 signal streaming_changed(loading: Array)
 
+## Where the planet surface zone sits in the world, far from the fleet.
+const PLANET_ORIGIN := Vector3(0, -6000, 0)
+
 const ZONES := {
 	"hangar": {
 		"title": "Hangar Bay 3",
@@ -30,13 +33,18 @@ const ZONES := {
 	"flightdeck": {
 		"title": "Dorsal Flight Deck",
 		"scene": "res://scenes/zones/flightdeck.tscn",
-		"bounds": AABB(Vector3(-90, 140, -30), Vector3(170, 60, 60)),
+		"bounds": AABB(Vector3(-90, 140, -36), Vector3(170, 60, 72)),
 		"keep": ["space"],
 	},
 	"detention": {
 		"title": "Detention Level",
 		"scene": "res://scenes/zones/detention.tscn",
 		"bounds": AABB(Vector3(-40, -160, -14), Vector3(70, 20, 28)),
+	},
+	"planet": {
+		"title": "Planet Surface — Forward Outpost",
+		"scene": "res://scenes/zones/planet.tscn",
+		"bounds": AABB(PLANET_ORIGIN + Vector3(-1700, -200, -1700), Vector3(3400, 2200, 3400)),
 	},
 	# Everything outside the ship. Listed last: zone_at() checks in order, so
 	# this only wins when the player is in no other zone.

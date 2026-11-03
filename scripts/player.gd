@@ -58,81 +58,92 @@ func _ready() -> void:
 	_build_camera()
 
 
-## An original armored trooper: rounded white plates over a black body glove,
-## a domed helmet with a wraparound visor band and blue unit markings.
+## An original armored trooper: segmented white plates over a black body
+## glove, blue unit markings, and a helmet with a flared dome, a brow ridge,
+## two angled eye lenses and a breather slit.
 func _build_model() -> void:
 	_model = Node3D.new()
 	add_child(_model)
 	var white := Look.armor
 	var glove := Look.undersuit
 	var stripe := Look.armor_stripe
+	var dark := Look.visor
 	# Legs pivot at the hip so they can swing.
 	for side in [-1.0, 1.0]:
 		var hip := Node3D.new()
 		hip.position = Vector3(side * 0.12, 0.93, 0)
 		_model.add_child(hip)
-		_cap(hip, 0.085, 0.92, Vector3(0, -0.45, 0), glove)
-		_cap(hip, 0.105, 0.42, Vector3(0, -0.2, -0.015), white)              # thigh plate
-		_sph(hip, 0.075, Vector3(0, -0.47, -0.06), Look.hull_dark)           # knee pad
-		_cap(hip, 0.095, 0.4, Vector3(0, -0.68, -0.005), white)              # shin plate
-		_box(hip, Vector3(0.17, 0.11, 0.3), Vector3(0, -0.88, -0.04), white) # boot
-		_box(hip, Vector3(0.18, 0.04, 0.31), Vector3(0, -0.93, -0.04), glove)
+		var b := ShipBuilder.new()
+		_tube_y(b, [[-0.02, 0.075, 0.08], [-0.9, 0.065, 0.07]], glove)
+		_tube_y(b, [[-0.03, 0.1, 0.112], [-0.2, 0.108, 0.118], [-0.4, 0.086, 0.096]], white)   # thigh plate
+		b.sphere(0.07, Vector3(0, -0.46, -0.05), Look.hull_dark, Vector3(1, 0.9, 0.8))       # knee
+		_tube_y(b, [[-0.5, 0.08, 0.088], [-0.6, 0.094, 0.104], [-0.8, 0.074, 0.084]], white)   # shin
+		var boot := []
+		for r in [[0.09, 0.075, 0.055], [-0.03, 0.085, 0.07], [-0.15, 0.075, 0.055], [-0.21, 0.04, 0.035]]:
+			boot.append(ShipBuilder.ring(Vector3(0, -0.865, r[0] - 0.02), r[1], r[2], 14, 2.6))
+		b.loft(boot, white)
+		b.box(Vector3(0.16, 0.025, 0.3), Vector3(0, -0.925, -0.05), Look.hull_dark)
 		if side < 0:
-			_box(hip, Vector3(0.03, 0.22, 0.12), Vector3(-0.1, -0.2, -0.01), stripe)
+			b.sphere(0.5, Vector3(-0.1, -0.2, -0.01), stripe, Vector3(0.025, 0.24, 0.12))
+		_add(hip, b)
 		_legs.append(hip)
-	# Belt and pouches, body glove torso, chest and abdomen plates.
-	_cap(_model, 0.17, 0.34, Vector3(0, 1.0, 0), glove)
-	_box(_model, Vector3(0.38, 0.08, 0.25), Vector3(0, 0.97, 0), Look.hull_dark)
-	for x in [-0.14, 0.0, 0.14]:
-		_box(_model, Vector3(0.08, 0.08, 0.05), Vector3(x, 0.97, -0.14), white)
-	_cap(_model, 0.19, 0.5, Vector3(0, 1.32, 0), glove)
-	_box(_model, Vector3(0.28, 0.15, 0.22), Vector3(0, 1.12, -0.02), white)
-	var chest := _sph(_model, 0.23, Vector3(0, 1.38, -0.02), white)
-	chest.scale = Vector3(1.0, 0.75, 0.62)
-	_box(_model, Vector3(0.22, 0.04, 0.02), Vector3(0, 1.31, -0.165), stripe)
-	_cap(_model, 0.13, 0.1, Vector3(0, 1.56, 0), glove)                   # collar
-	_box(_model, Vector3(0.3, 0.32, 0.12), Vector3(0, 1.32, 0.2), Look.hull_dark)  # pack
-	_cap(_model, 0.012, 0.35, Vector3(0.1, 1.6, 0.22), Look.metal)        # antenna
-	# Helmet: dome, wraparound visor band, cheek guards, crest and side stripes.
+	# Torso: body glove, belt, abdominal plates, chest and back plate, collar, pack.
+	var t := ShipBuilder.new()
+	_tube_y(t, [[0.88, 0.15, 0.11], [1.62, 0.17, 0.12]], glove)
+	_tube_y(t, [[0.94, 0.19, 0.135], [1.03, 0.19, 0.135]], white)                          # belt
+	t.box(Vector3(0.09, 0.07, 0.03), Vector3(0, 0.985, -0.14), Look.hull_dark)              # buckle
+	for x in [-0.15, -0.09, 0.09, 0.15]:
+		t.sphere(0.5, Vector3(x, 0.98, -0.12 + absf(x) * 0.25), Look.hull_dark, Vector3(0.05, 0.06, 0.04))
+	_tube_y(t, [[1.07, 0.165, 0.12], [1.15, 0.17, 0.125]], white)                          # abdomen plates
+	_tube_y(t, [[1.17, 0.175, 0.128], [1.25, 0.18, 0.13]], white)
+	_tube_y(t, [[1.27, 0.18, 0.125], [1.38, 0.225, 0.14], [1.5, 0.24, 0.145], [1.6, 0.17, 0.11]], white)  # chest
+	t.sphere(0.5, Vector3(0, 1.43, -0.142), stripe, Vector3(0.16, 0.035, 0.02))            # chest marking
+	_tube_y(t, [[1.6, 0.11, 0.09], [1.66, 0.09, 0.075]], glove)                            # collar
+	var pack := []
+	for r in [[1.18, 0.12, 0.05], [1.3, 0.15, 0.07], [1.48, 0.14, 0.065], [1.54, 0.1, 0.04]]:
+		pack.append(ShipBuilder.ring(Vector3(0, r[0], 0.2), r[1], r[2], 14, 3.0, Vector3.RIGHT, Vector3.BACK))
+	t.loft(pack, Look.ship_grey)
+	t.tube(0.012, 0.012, 0.32, Vector3(0.1, 1.68, 0.22), Look.metal, Vector3.UP, 6)
+	for side in [-1.0, 1.0]:
+		t.sphere(0.13, Vector3(side * 0.28, 1.53, 0), white, Vector3(1.0, 0.72, 1.05))        # shoulder bells
+	t.sphere(0.135, Vector3(0.285, 1.535, 0), stripe, Vector3(0.6, 0.55, 1.07))             # unit marking
+	_add(_model, t)
+	# Helmet.
 	var head := Node3D.new()
 	head.position = Vector3(0, 1.72, 0)
 	_model.add_child(head)
-	var dome := _sph(head, 0.15, Vector3(0, 0.02, 0.0), white)
-	dome.scale = Vector3(1.0, 1.08, 1.12)
-	var band := MeshInstance3D.new()
-	var ring := CylinderMesh.new()
-	ring.top_radius = 0.152
-	ring.bottom_radius = 0.158
-	ring.height = 0.05
-	ring.radial_segments = 20
-	ring.rings = 1
-	band.mesh = ring
-	band.material_override = Look.visor
-	band.scale = Vector3(1.0, 1.0, 1.12)
-	band.position = Vector3(0, 0.03, -0.004)
-	head.add_child(band)
-	_box(head, Vector3(0.22, 0.09, 0.08), Vector3(0, -0.09, -0.12), white)   # jaw guard
-	_box(head, Vector3(0.14, 0.03, 0.02), Vector3(0, -0.07, -0.165), Look.hull_dark)
-	_box(head, Vector3(0.025, 0.06, 0.24), Vector3(0, 0.16, 0.0), stripe)    # crest
+	var h := ShipBuilder.new()
+	var dome := []
+	for r in [[-0.135, 0.168, 0.185], [-0.095, 0.15, 0.168], [0.0, 0.152, 0.172], [0.07, 0.143, 0.163],
+			[0.12, 0.116, 0.132], [0.155, 0.07, 0.08], [0.172, 0.02, 0.02]]:
+		dome.append(ShipBuilder.ring(Vector3(0, r[0], 0), r[1], r[2], 20, 2.2, Vector3.RIGHT, Vector3.BACK))
+	h.loft(dome, white)
+	h.sphere(0.5, Vector3(0, 0.055, -0.162), white, Vector3(0.25, 0.035, 0.05))             # brow ridge
 	for side in [-1.0, 1.0]:
-		var ear := _cyl(head, 0.045, 0.03, Vector3(side * 0.155, -0.02, 0.01), Look.hull_dark)
-		ear.rotation.z = deg_to_rad(90)
-	# Shoulder bells, one with the unit stripe.
-	for side in [-1.0, 1.0]:
-		var bell := _sph(_model, 0.11, Vector3(side * 0.29, 1.5, 0), white)
-		bell.scale = Vector3(1.0, 0.8, 1.1)
-		if side > 0:
-			_box(_model, Vector3(0.04, 0.1, 0.18), Vector3(0.39, 1.48, 0), stripe)
+		h.sphere(0.05, Vector3(side * 0.058, 0.012, -0.163), dark, Vector3(1.15, 0.62, 0.45), Vector3(0, 0, side * 0.28))  # eye lenses
+		h.sphere(0.5, Vector3(side * 0.105, -0.085, -0.125), white, Vector3(0.07, 0.09, 0.1))  # cheek guards
+		h.box(Vector3(0.018, 0.04, 0.012), Vector3(side * 0.045, -0.085, -0.168), dark, Vector3(0, 0, side * 0.3))  # breather grilles
+		h.tube(0.042, 0.042, 0.03, Vector3(side * 0.155, -0.02, 0.01), Look.hull_dark, Vector3.RIGHT, 12)  # ear caps
+	h.box(Vector3(0.022, 0.07, 0.014), Vector3(0, -0.07, -0.172), dark)                     # breather slit
+	h.sphere(0.5, Vector3(0, 0.06, 0.0), stripe, Vector3(0.03, 0.23, 0.35))                 # crest
+	_add(head, h)
 	# Arms and rifle on one pivot that follows the camera pitch.
 	_arm_pivot = Node3D.new()
 	_arm_pivot.position = Vector3(0, 1.42, 0)
 	_model.add_child(_arm_pivot)
+	var a := ShipBuilder.new()
 	for side in [-1.0, 1.0]:
-		var upper := _cap(_arm_pivot, 0.06, 0.34, Vector3(side * 0.26, -0.1, -0.06), glove)
-		upper.rotation.x = deg_to_rad(50)
-		var fore := _cap(_arm_pivot, 0.065, 0.32, Vector3(side * 0.16, -0.16, -0.3), white)
-		fore.rotation = Vector3(deg_to_rad(90), 0, side * deg_to_rad(-30))
-		_sph(_arm_pivot, 0.05, Vector3(side * 0.06, -0.13, -0.44), glove)    # hands
+		var upper := Transform3D(Basis(Vector3.RIGHT, deg_to_rad(50)), Vector3(side * 0.26, -0.1, -0.06))
+		var arm := ShipBuilder.new()
+		_tube_y(arm, [[0.18, 0.055, 0.055], [-0.18, 0.05, 0.05]], glove)
+		_tube_y(arm, [[0.12, 0.07, 0.07], [-0.08, 0.064, 0.064]], white)                     # upper arm plate
+		a.merge(arm, upper)
+		var fore := Transform3D(Basis.from_euler(Vector3(deg_to_rad(90), 0, side * deg_to_rad(-30))), Vector3(side * 0.16, -0.16, -0.3))
+		var gauntlet := ShipBuilder.new()
+		_tube_y(gauntlet, [[0.16, 0.06, 0.06], [0.0, 0.07, 0.068], [-0.16, 0.055, 0.05]], white)
+		a.merge(gauntlet, fore)
+		a.sphere(0.05, Vector3(side * 0.06, -0.13, -0.44), glove)                            # hands
+	_add(_arm_pivot, a)
 	var gun := Node3D.new()
 	gun.position = Vector3(0.04, -0.07, -0.4)
 	_arm_pivot.add_child(gun)
@@ -146,6 +157,20 @@ func _build_model() -> void:
 	_muzzle = Node3D.new()
 	_muzzle.position = Vector3(0, 0.02, -0.66)
 	gun.add_child(_muzzle)
+
+
+## A vertical rounded tube through rings of [y, half width, half depth].
+func _tube_y(b: ShipBuilder, rings_spec: Array, mat: Material) -> void:
+	var rings := []
+	for r in rings_spec:
+		rings.append(ShipBuilder.ring(Vector3(0, r[0], 0), r[1], r[2], 16, 2.4, Vector3.RIGHT, Vector3.BACK))
+	b.loft(rings, mat)
+
+
+func _add(parent: Node3D, b: ShipBuilder) -> void:
+	var mi := MeshInstance3D.new()
+	mi.mesh = b.commit()
+	parent.add_child(mi)
 
 
 func _cap(parent: Node3D, r: float, h: float, pos: Vector3, mat: Material) -> MeshInstance3D:
