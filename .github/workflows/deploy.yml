@@ -52,6 +52,13 @@ jobs:
           ~/godot/godot --headless --path . --import
           ~/godot/godot --headless --path . --export-release "Web" build/web/index.html
           test -f build/web/index.wasm
+          # Godot's offline cache serves the old copy until every tab of the
+          # game is closed. Make a new version take over as soon as it's
+          # installed; the page then reloads into it (see head_include).
+          sw=build/web/index.service.worker.js
+          sed -i "s|self.addEventListener('install', (event) => {|self.addEventListener('install', (event) => {\n\tself.skipWaiting();|" $sw
+          sed -i "s|event.waitUntil(caches.keys().then(|event.waitUntil(self.clients.claim().then(() => caches.keys()).then(|" $sw
+          grep -q "self.skipWaiting();" $sw
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

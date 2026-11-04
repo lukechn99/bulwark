@@ -185,12 +185,19 @@ func _backdrop() -> void:
 	var sister: Array = ShipModels.sister_ship()
 	for c in [[Vector3(700, 260, -1500), 0.0], [Vector3(-500, 120, 1600), 0.0], [Vector3(1500, 60, 1000), 10.0],
 			[Vector3(-200, 430, -1150), -8.0], [Vector3(900, -120, 1500), 6.0]]:
-		_friendlies.append(_place_ship(fleet, sister, c[0], c[1]))
+		var ship := _place_ship(fleet, sister, c[0], c[1])
+		# The sister ships' hangar sits where ours does, in the bow face of the keel.
+		ship.add_child(CapitalBay.make(Vector3(24, -150, 0), false, "LANDING BAY"))
+		_friendlies.append(ship)
 	var dread: Array = ShipModels.dreadnought()
 	var corvette: Array = ShipModels.corvette()
 	for c in [[Vector3(-1650, 260, -700), 30.0, dread, 1.0], [Vector3(-1500, -60, 900), -20.0, dread, 1.0],
 			[Vector3(-1250, 420, 300), 0.0, corvette, 2.5], [Vector3(-1900, 100, 150), 10.0, corvette, 2.5]]:
-		_enemies.append(_place_ship(fleet, c[2], c[0], c[1], c[3]))
+		var ship := _place_ship(fleet, c[2], c[0], c[1], c[3])
+		if c[2] == dread:
+			# A hangar pod slung under the dreadnought's bow.
+			ship.add_child(CapitalBay.make(Vector3(150, -64, 0), true, "ENEMY HANGAR"))
+		_enemies.append(ship)
 
 
 func _place_ship(parent: Node3D, model: Array, pos: Vector3, yaw_deg: float, scale_by := 1.0) -> Node3D:

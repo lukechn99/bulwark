@@ -65,7 +65,7 @@ On a phone or tablet (landscape):
 | Port Service Corridor | 40 m of ribbed corridor with console niches, ending in a lift hall with one turbolift per deck |
 | Command Bridge | A walkway between crew pits, a holotable and forward viewports |
 | Dorsal Flight Deck | A long trench in the top of the hull under a ray shield, with eight side hangars and the command tower behind it. Heavy turrets on the hull are crewed from stations in the trench walls, and enemy fighters make strafing runs |
-| Open Space | The *Bulwark*'s own hull (fly back in through the hangar mouth or down onto the flight deck), five sister ships of its class trading broadsides with two enemy dreadnoughts (crescent-clawed, original design) and their corvettes, the frigate *Steadfast* with a repair bay you can land in, and an enemy corvette with four reactor pods to destroy, flak guns and escort fighters |
+| Open Space | The *Bulwark*'s own hull (fly back in through the hangar mouth or down onto the flight deck), five sister ships of its class trading broadsides with two enemy dreadnoughts (crescent-clawed, original design) and their corvettes. Every sister ship has a blue-lit landing bay in its bow (landing repairs you) and each dreadnought has a red-lit hangar pod under its bow, garrisoned by droids when you come near, the frigate *Steadfast* with a repair bay you can land in, and an enemy corvette with four reactor pods to destroy, flak guns and escort fighters |
 | Planet Surface | Fly out toward the planet until you enter its atmosphere, then come down over a basin of pine forest ringed by snowy mountains to a forward outpost held by droids. Land on the pad, fight on foot, and climb back out to return to space |
 | Detention Level | A guard station and a cell block with energy-field doors. Release the cells from the guard console and lead the prisoner to the lift |
 
@@ -147,6 +147,7 @@ grate textures, the starfield and the input map.
 - `prisoner.gd`: the rescued officer who follows you.
 - `pilot_fighter.gd`: the flyable fighter: boarding, lift-off, flight, landing
   and the chase camera.
+- `capital_bay.gd`: landing bays on the sister ships and enemy dreadnoughts.
 - `zones/planet.gd`: the planet surface: terrain, forest, outpost and its defenders.
 - `zones/space.gd`: the Bulwark's outer hull, the frigate, the corvette and its escorts.
 - `ship_builder.gd`: builds smooth hulls by lofting cross-sections into a
@@ -181,3 +182,10 @@ Every push to `main` runs `.github/workflows/deploy.yml`. The workflow:
 
 One-time setup: in the repository, go to **Settings → Pages → Build and
 deployment** and set the source to **GitHub Actions**.
+
+## Updates and the offline cache
+
+The web build installs a service worker so the game can be added to a home
+screen. Godot's worker serves its cached copy first, so the deploy workflow
+patches it to take over as soon as a new version is installed, and the page
+reloads into the new version when that happens.
